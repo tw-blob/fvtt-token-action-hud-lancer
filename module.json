@@ -1,0 +1,78 @@
+{
+  "id": "token-action-hud-lancer",
+  "title": "Token Action HUD LANCER",
+  "description": "Plugin for Token Action HUD to provide easily-accessible actions for the LANCER RPG system in Foundry VTT",
+  "authors": [
+    {
+      "name": "Larkinabout",
+      "url": "https://github.com/Larkinabout"
+    },
+    {
+      "name": "Drental"
+    },
+    {
+      "name": "dodgepong",
+      "url": "https://github.com/dodgepong"
+    },
+    {
+      "name": "^ and stick"
+    }
+  ],
+  "url": "https://github.com/dodgepong/fvtt-token-action-hud-lancer",
+  "flags": {},
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "10",
+    "verified": "10.291"
+  },
+  "scripts": [
+  ],
+  "styles": [
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    }
+  ],
+  "packs": [],
+  "relationships": {
+    "systems": [
+      {
+        "id": "lancer",
+        "type": "system",
+        "compatibility": [
+          {
+            "minimum": "1.4.1",
+            "verified": "1.4.2"
+          }
+        ]
+      }
+    ],
+    "requires": [
+      {
+        "id": "token-action-hud-core",
+        "type": "module",
+        "compatibility": [
+          {
+            "minimum": "1.0.1",
+            "maximum": "1.0",
+            "verified": "1.0.1"
+          }
+        ]
+      }
+    ],
+    "optional": [],
+    "flags": {
+      "optional": []
+    }
+  },
+  "socket": false,
+  "manifest": "https://github.com/dodgepong/fvtt-token-action-hud-lancer/releases/download/1.0.0/module.zip",
+  "download": "https://github.com/dodgepong/fvtt-token-action-hud-lancer/releases/latest/download/module.zip",
+  "readme": "https://github.com/dodgepong/fvtt-token-action-hud-lancer#readme",
+  "protected": false,
+  "coreTranslation": false,
+  "library": false
+}
