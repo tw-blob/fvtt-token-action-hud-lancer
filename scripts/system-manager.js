@@ -1,41 +1,75 @@
+// System Module Imports
 import { ActionHandler } from './action-handler.js'
 import { RollHandler as Core } from './roll-handler.js'
+import { MODULE } from './constants.js'
+import { DEFAULTS } from './defaults.js'
 import * as systemSettings from './settings.js'
 
-import { CoreSystemManager, CoreCategoryManager, CoreUtils } from './config.js'
-import { DEFAULTS } from './defaults.js'
+export let SystemManager = null
 
-export class SystemManager extends CoreSystemManager {
-    /** @override */
-    doGetCategoryManager () {
-        return new CoreCategoryManager();
-    }
+Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
+    /**
+     * Extends Token Action HUD Core's SystemManager class
+     */
+    SystemManager = class SystemManager extends coreModule.api.SystemManager {
+        /**
+         * Returns an instance of the ActionHandler to Token Action HUD Core
+         * Called by Token Action HUD Core
+         * @override
+         * @returns {class} The ActionHandler instance
+         */
+        getActionHandler () {
+            return new ActionHandler()
+        }
 
-    /** @override */
-    doGetActionHandler(categoryManager) {
-        let actionHandler = new ActionHandler(categoryManager);
-        return actionHandler;
-    }
+        /**
+         * Returns a list of roll handlers to Token Action HUD Core
+         * Used to populate the Roll Handler module setting choices
+         * Called by Token Action HUD Core
+         * @override
+         * @returns {object} The available roll handlers
+         */
+        getAvailableRollHandlers () {
+            const coreTitle = 'Core LANCER'
+            const choices = { core: coreTitle }
+            return choices
+        }
 
-    /** @override */
-    getAvailableRollHandlers() {
-        let choices = { core: "Core Lancer" };
-        return choices;
-    }
+        /**
+         * Returns an instance of the RollHandler to Token Action HUD Core
+         * Called by Token Action HUD Core
+         * @override
+         * @param {string} rollHandlerId The roll handler ID
+         * @returns {class}              The RollHandler instance
+         */
+        getRollHandler (rollHandlerId) {
+            let rollHandler
+            switch (rollHandlerId) {
+            case 'core':
+            default:
+                rollHandler = new Core()
+                break
+            }
+            return rollHandler
+        }
 
-    /** @override */
-    doGetRollHandler(handlerId) {
-        return new Core();
-    }
+        /**
+         * Returns the default layout and groups to Token Action HUD Core
+         * Called by Token Action HUD Core
+         * @returns {object} The default layout and groups
+         */
+        async registerDefaults () {
+            return DEFAULTS
+        }
 
-    /** @override */
-    doRegisterSettings(updateFunc) {
-        systemSettings.register(updateFunc);
+        /**
+         * Register Token Action HUD system module settings
+         * Called by Token Action HUD Core
+         * @override
+         * @param {function} onChangeFunction The Token Action HUD Core update function
+         */
+        registerSettings (onChangeFunction) {
+            systemSettings.register(onChangeFunction)
+        }
     }
-
-    /** @override */
-    async doRegisterDefaultFlags() {
-        const defaults = DEFAULTS;
-        await CoreUtils.setUserFlag('default', defaults);
-    }
-}
+})
