@@ -1,519 +1,314 @@
-import { CoreActionHandler, CoreUtils, Logger } from './config.js'
+// System Module Imports
+import { ACTION_TYPE, ENTRY_TYPE, WEAPON_TYPE } from './constants.js'
 
-export class ActionHandler extends CoreActionHandler {
-    // Initialize actor and token variables
-    actor = null;
-    actors = null;
-    actorId = null;
-    actorType = null;
-    character = null;
-    token = null;
-    tokenId = null;
+export let ActionHandler = null
 
-    mm = null
-
+Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
     /**
-     * Build System Actions
-     * @override
-     * @param {object} character
-     * @param {array} subcategoryIds
-     * @returns {object}
-     */
-    async buildSystemActions(character, subcategoryIds) {
-        // Set actor and token variables
-        this.actor = character?.actor;
-        this.token = character?.token;
-        if (!this.token || !this.actor) return;
+    * Extends Token Action HUD Core's ActionHandler class and builds system-defined actions for the HUD
+    */
+    ActionHandler = class ActionHandler extends coreModule.api.ActionHandler {
+        // Initialize actor and token variables
+        actors = null
+        tokens = null
+        actorType = null
 
-        this.actorId = this.actor.id;
-        this.actorType = this.actor.type;
-        this.tokenId = this.token.id;
+        // Initialize items variable
+        items = null
 
-        this.mm = await this.actor.system.derived.mm;
+        // Initialize setting variables
+        showDestroyedItems = null
+        showItemsWithoutActivations = null
+        showItemsWithoutUses = null
+        showNpcFeaturesWithoutActivations = null
+        showUnchargedNpcFeatures = null
+        showUnequippedItems = null
+        showUnloadedWeapons = null
+        showUsedCorePower = null
 
-        switch (this.actorType) {
-            case "pilot":
-                this._buildPilotCategory(this.mm);
-                // this._combineCategoryWithList(
-                //     result,
-                //     CoreUtils.i18n("tokenActionHud.lancer.pilot"),
-                //     this._pilotCategory(mm, actorId)
-                // );
-                break;
-            case "mech":
-                this._buildPilotCategory(this.mm.Pilot);
-        //         this._combineCategoryWithList(
-        //             result,
-        //             CoreUtils.i18n("tokenActionHud.lancer.pilot"),
-        //             this._pilotCategory(mm.Pilot, mm.Pilot.RegistryID)
-        //         );
-        //         this._combineCategoryWithList(
-        //             result,
-        //             CoreUtils.i18n("tokenActionHud.lancer.mech"),
-        //             this._mechCategory(mm, actorId)
-        //         );
-        //         this._combineCategoryWithList(
-        //             result,
-        //             CoreUtils.i18n("tokenActionHud.weapons"),
-        //             this._weaponsCategory(mm.Loadout.WepMounts, actorId)
-        //         );
-        //         this._combineCategoryWithList(
-        //             result,
-        //             CoreUtils.i18n("tokenActionHud.lancer.systems"),
-        //             this._systemsCategory(mm.Loadout.SysMounts, actorId)
-        //         );
-        //         break;
-        //     case "npc":
-        //         this._combineCategoryWithList(
-        //             result,
-        //             CoreUtils.i18n("tokenActionHud.lancer.stats"),
-        //             this._npcBaseCategory(actor, actorId)
-        //         );
-        //         this._combineCategoryWithList(
-        //             result,
-        //             CoreUtils.i18n("tokenActionHud.features"),
-        //             this._npcFeatureCategory(actor, actorId)
-        //         );
-        //         break;
+        // Initialize groupIds variables
+        activationgroupIds = null
+        systemGroupIds = null
+        npcFeatureIds = null
+
+        // Initialize action variables
+        featureActions = null
+        inventoryActions = null
+        spellActions = null
+
+        /**
+         * Build System Actions
+         * @override
+         * @param {array} groupIds
+         * @returns {object}
+         */
+        async buildSystemActions (groupIds) {
+            // Set actor and token variables
+            this.actors = (!this.actor) ? this.#getActors() : [this.actor]
+            this.tokens = (!this.token) ? this.#getTokens() : [this.token]
+            this.actorType = this.actor?.type
+            
+            // Set items variable
+            if (this.actor) {
+                let items = this.actor.items
+                items = coreModule.api.Utils.sortItemsByName(items)
+                this.items = items
+            }
+
+            // Set settings variables TODO
+            //this.showDestroyedItems = Utils.getSetting('showDestroyedItems')
+            //this.showItemsWithoutActivations = Utils.getSetting('showItemsWithoutActivations')
+            //this.showItemsWithoutUses = Utils.getSetting('showItemsWithoutUses')
+            //this.showNpcFeaturesWithoutActivations = Utils.getSetting('showNpcFeaturesWithoutActivations')
+            //this.showUnequippedItems = Utils.getSetting('showUnequippedItems')
+            //this.showUnchargedNpcFeatures = Utils.getSetting('showUnchargedNpcFeatures')
+            //this.showUnloadedWeapons = Utils.getSetting('showUnloadedWeapons')
+            //this.showUsedCorePower = Utils.getSetting('showUsedCorePower')
+
+            this.activationgroupIds = [
+                'quick-actions',
+                'full-actions',
+                'reactions',
+                'protocols',
+                'free-actions',
+                'quick-tech',
+                'full-tech',
+            ]
+
+            this.systemGroupIds = [
+                'actions',
+                'deployables',
+                'techs'
+            ]
+
+            this.npcFeatureIds = [
+                'techs',
+                'systems',
+                'weapons',
+                'traits',
+            ]
+
+            switch (this.actorType) {
+                case ENTRY_TYPE.MECH:
+                    this.#buildMechActions()
+                    break
+                case ENTRY_TYPE.PILOT:
+                    this.#buildPilotActions()
+                    break
+                case ENTRY_TYPE.NPC:
+                    this.#buildNpcActions()
+                    break
+                case ENTRY_TYPE.DEPLOYABLE:
+                    this.#buildDeployableActions()
+                    break
+                default:
+                    break
+            }
+
+            if (!this.actor) {
+                this.#buildMultipleTokenActions()
+            }
         }
 
-        // if (settings.get("showHudTitle")) result.hudTitle = token.name;
-    }
-
-    _buildPilotCategory(mm) {
-        this._buildSkillsTriggersSubCategory(mm);
-        this._buildGritSubCategory(mm);
-        this._buildTalentsSubCategory(mm);
-        // this._buildPilotGearSubCategory();
-        // this._buildPilotWeaponSubCategory();
-    }
-
-    _makeAction(actionName, actionType, actorId, actionId, option) {
-        const action = {
-            "name": actionName,
-            "encodedValue": [
-                actionType,
-                actorId,
-                actionId,
-                JSON.stringify(option ? option : {}),
-            ].join(this.delimiter)
+        /**
+         * Build deployable actions TODO
+         * @private
+         */
+        #buildDeployableActions () {
         }
-        return action;
-    }
 
-    _makeActionsFromItems(actorId, itemType, mm) {
-        let macro = "item";
-        const actions = mm
-            .filter((item) => {
-                if (item != null) return item.Type === itemType;
-            })
-            .map((item) => {
-                return this._makeAction(item.Name, macro, actorId, item.RegistryID);
-            });
+        /**
+         * Build mech actions
+         * @private
+         */
+        #buildMechActions () {
+            //this.#buildHase()
+            //this.#buildStatuses()
+            this.#buildWeapons()
+        }
 
-        return actions;
-    }
+        /**
+         * Build multiple token actions TODO
+         * @private
+         * @returns {object}
+         */
+        #buildMultipleTokenActions () {
+        }
 
-    _makeNPCItemSubCat(name, itemType, actor, actorId) {
-        let result = this.initializeEmptySubcategory();
-        let macro = "item";
+        /**
+         * Build npc actions TODO
+         * @private
+         */
+        #buildNpcActions() {
+            //this.#buildHase()
+            //this.#buildNpcFeatures()
+            //this.#buildStatuses()
+            this.#buildWeapons()
+        }
 
-        result.name = name;
-        result.actions = actor.items
-            .filter((item) => {
-                if (item != null) return item.type === "npc_feature";
-            })
-            .filter((item) => {
-                return item.system.type === itemType;
-            })
-            .map((item) => {
-                return this._makeAction(item.name, macro, actorId, item.id);
-            });
-        return result;
-    }
+        /**
+         * Build pilot actions
+         * @private
+         */
+        #buildPilotActions () {
+            //this.#buildHase()
+            //this.#buildPilotInventory()
+            //this.#buildPilotStats()
+            //this.#buildStatuses()
+        }
 
-    _pilotCategory() {
+        /**
+         * Build statuses and conditions
+         * @private
+         */
+        #buildStatuses () {
+            if (this.tokens?.length === 0) return
 
+            const actionType = 'status'
 
+            // Get statuses
+            const statuses = CONFIG.statusEffects.filter((status) => status.id !== '')
 
-        return result;
-    }
+            // Exit if no statuses exist
+            if (statuses.length === 0) return
 
-    _npcBaseCategory(actor, actorId) {
-        let result = this.initializeEmptyCategory("mech");
-
-        [this._haseSubCategory(actorId)].forEach((subCat) => {
-            this._combineSubcategoryWithCategory(result, subCat.name, subCat);
-        });
-
-        return result;
-    }
-
-    _npcFeatureCategory(actor, actorId) {
-        let result = this.initializeEmptyCategory("feature");
-
-        [
-            this._npcWeaponSubCat(actor, actorId),
-            this._npcTechSubCat(actor, actorId),
-            this._npcReactionSubCat(actor, actorId),
-            this._npcSystemSubCat(actor, actorId),
-            this._npcTraitSubCat(actor, actorId),
-        ].forEach((subCat) => {
-            this._combineSubcategoryWithCategory(result, subCat.name, subCat);
-        });
-
-        return result;
-    }
-
-    _npcWeaponSubCat(actor, actorId) {
-        let weaponSubCat = this._makeNPCItemSubCat(
-            CoreUtils.i18n("tokenActionHud.weapons"),
-            "Weapon",
-            actor,
-            actorId
-        );
-
-        let basicAttack = this._makeAction(
-            CoreUtils.i18n("tokenActionHud.lancer.basicAttack"),
-            "stat",
-            actorId,
-            "basicattack"
-        );
-        weaponSubCat.actions.push(basicAttack);
-
-        return weaponSubCat
-    }
-
-    _npcTraitSubCat(actor, actorId) {
-        return this._makeNPCItemSubCat(
-            CoreUtils.i18n("tokenActionHud.traits"),
-            "Trait",
-            actor,
-            actorId
-        );
-    }
-
-    _npcSystemSubCat(actor, actorId) {
-        return this._makeNPCItemSubCat(
-            CoreUtils.i18n("tokenActionHud.lancer.systems"),
-            "System",
-            actor,
-            actorId
-        );
-    }
-
-    _npcTechSubCat(actor, actorId) {
-        let techSubCat = this._makeNPCItemSubCat(
-            CoreUtils.i18n("tokenActionHud.lancer.techs"),
-            "Tech",
-            actor,
-            actorId
-        );
-
-        let basicTechAttack = this._makeAction(
-            CoreUtils.i18n("tokenActionHud.lancer.techAttack"),
-            "stat",
-            actorId,
-            "techattack"
-        );
-        techSubCat.actions.push(basicTechAttack)
-
-        return techSubCat;
-    }
-
-    _npcReactionSubCat(actor, actorId) {
-        return this._makeNPCItemSubCat(
-            CoreUtils.i18n("tokenActionHud.reactions"),
-            "Reaction",
-            actor,
-            actorId
-        );
-    }
-
-    _buildSkillsTriggersSubCategory(mm) {
-        let actorId = mm.RegistryID;
-        const actions = this._makeActionsFromItems(actorId, "skill", mm._skills);
-
-        // Create subcategory data
-        const subcategoryData = { id: 'skill-triggers', type: 'system' }
-
-        // Add actions to action list
-        this.addActionsToActionList(actions, subcategoryData)
-    }
-
-    _buildGritSubCategory(mm) {
-        let actorId = mm.RegistryID;
-        const actions = [this._makeAction(CoreUtils.i18n("tokenActionHud.lancer.grit"), "stat", actorId, "Grit")];
-
-        // Create subcategory data
-        const subcategoryData = { id: 'grit', type: 'system' }
-
-        // Add actions to action list
-        this.addActionsToActionList(actions, subcategoryData)
-    }
-
-    _buildTalentsSubCategory(mm) {
-        let actorId = mm.RegistryID;
-        let macro = "item";
-        let parentSubcategoryData = { id: 'talents', type: 'system', hasDerivedSubcategories: true }
-
-        let talent_iterator = 1;
-        mm._talents
-            .filter((item) => {
-                if (item != null) return item.Type === "talent";
-            })
-            .map((talent) => {
-                console.log(talent.Name);
-                const subcat = {
-                    id: `pilot-talent-${talent.RegistryID}`,
-                    name: talent.Name,
-                    type: "system-derived"
-                };
-                console.log(subcat);
-
-                this.addSubcategoryToActionList(parentSubcategoryData, subcat);
-
-                const actions = [];
-                for (let i = 0; i < talent.CurrentRank; i++) {
-                    let option = { rank: `${i}` };
-                    console.log(talent.Ranks[i].Name);
-                    actions.push(this._makeAction(
-                        `${CoreUtils.i18n("tokenActionHud.lancer.rank")} ${i + 1}: ${talent.Ranks[i].Name}`,
-                        macro,
-                        actorId,
-                        talent.RegistryID,
-                        option
-                    ));
+            // Get actions
+            const actions = statuses.map((status) => {
+                const id = status.id
+                const name = coreModule.api.Utils.i18n(status.label) ?? status.name
+                const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? ''
+                const listName = `${actionTypeName}${name}`
+                const encodedValue = [actionType, id].join(this.delimiter)
+                const active = this.actors.every((actor) => {
+                    if (game.version.startsWith('11')) {
+                        return actor.effects.some(effect => effect.statuses.some(status => status === id) && !effect?.disabled)
+                    } else {
+                        // V10
+                        return actor.effects.some(effect => effect.flags?.core?.statusId === id && !effect?.disabled)
+                    }
+                })
+                    ? ' active'
+                    : ''
+                const cssClass = `toggle${active}`
+                const img = coreModule.api.Utils.getImage(status)
+                return {
+                    id,
+                    name,
+                    encodedValue,
+                    img,
+                    cssClass,
+                    listName,
                 }
-                this.addActionsToActionList(actions, subcat);
-                talent_iterator++;
-            });
-    }
+            })
 
-    _pilotWeaponSubCategory(mm, actorId) {
-        return this._makeItemSubCat(
-            CoreUtils.i18n("tokenActionHud.weapons"),
-            "pilot_weapon",
-            mm.Loadout.Weapons,
-            actorId
-        );
-    }
+             // Create group data
+             const groupData = { id: 'statuses', type: 'system' }
 
-    _pilotGearSubCategory(mm, actorId) {
-        return this._makeItemSubCat(
-            CoreUtils.i18n("tokenActionHud.lancer.gear"),
-            "pilot_gear",
-            mm.Loadout.Gear,
-            actorId
-        );
-    }
-
-    _mechCategory(mm, actorId) {
-        let result = this.initializeEmptyCategory("mech");
-
-        [
-            this._haseSubCategory(actorId),
-            this._frameSubCategory(mm, actorId),
-            this._coreBonSubCategory(mm, actorId),
-            this._corePowerSubCategory(mm.Loadout.Frame, actorId),
-        ].forEach((subCat) => {
-            this._combineSubcategoryWithCategory(result, subCat.name, subCat);
-        });
-
-        return result;
-    }
-
-    _haseSubCategory(actorId) {
-        let result = this.initializeEmptySubcategory();
-        let macro = "hase";
-
-        result.id = "hase";
-        result.name = CoreUtils.i18n("tokenActionHud.lancer.hase");
-
-        let hull = CoreUtils.i18n("tokenActionHud.lancer.hull");
-        let agility = CoreUtils.i18n("tokenActionHud.attribute.agility");
-        let systems = CoreUtils.i18n("tokenActionHud.lancer.systems");
-        let engineering = CoreUtils.i18n("tokenActionHud.lancer.engineering");
-
-        let haseActionData = [
-            { name: hull, id: "Hull" },
-            { name: agility, id: "Agi" },
-            { name: systems, id: "Sys" },
-            { name: engineering, id: "Eng" },
-        ];
-
-        let haseActions = haseActionData.map((actionData) => {
-            return this._makeAction(actionData.name, macro, actorId, actionData.id);
-        });
-
-        result.actions = haseActions;
-
-        return result;
-    }
-
-    _basicSubCategory(actorId) {
-        let result = this.initializeEmptySubcategory();
-        let macro = "stat";
-
-        result.id = "stat";
-        result.name = CoreUtils.i18n("tokenActionHud.lancer.basic");
-
-        let basicAttack = CoreUtils.i18n("tokenActionHud.lancer.basicAttack");
-        let techAttack = CoreUtils.i18n("tokenActionHud.lancer.techAttack");
-
-        let statActionData = [
-            { name: basicAttack, data: "basicattack" },
-            { name: techAttack, data: "techattack" },
-        ];
-
-        let statActions = statActionData.map((actionData) => {
-            return this._makeAction(actionData.name, macro, actorId, actionData.data);
-        });
-
-        result.actions = statActions;
-
-        return result;
-    }
-
-    _frameSubCategory(mm, actorId) {
-        let result = this.initializeEmptySubcategory();
-        let overchargeSequence = ["+1", "+1d3", "+1d6", "+1d6 + 4"];
-        let overchargeCount = Math.min(mm.OverchargeCount, overchargeSequence.length - 1);
-
-        result.id = "frame";
-        result.name = CoreUtils.i18n("tokenActionHud.lancer.frame");
-
-        let overchargeText = CoreUtils.i18n("tokenActionHud.lancer.overcharge") + " (" + overchargeSequence[overchargeCount] + ")";
-
-        result.actions = [
-            this._makeAction(overchargeText, "frame", actorId, "overcharge"),
-            this._makeAction(CoreUtils.i18n("tokenActionHud.lancer.stabilize"), "frame", actorId, "stabilize")
-        ];
-
-        return result;
-    }
-
-    _coreBonSubCategory(mm, actorId) {
-        let result = this.initializeEmptySubcategory();
-        let coreBonus = mm.Pilot.CoreBonuses;
-        result.name = "Core Bonuses";
-        result.actions = coreBonus.map((bonus) => {
-            let option = {};
-            option.pilot = mm.Pilot.RegistryID;
-            return this._makeAction(
-                bonus.Name,
-                "coreBonus",
-                actorId,
-                bonus.RegistryID,
-                option
-            );
-        });
-        return result;
-    }
-
-    _corePowerSubCategory(frame, actorId) {
-        let result = this.initializeEmptySubcategory();
-
-        let core = frame.CoreSystem;
-
-        result.name = core.Name;
-
-        if (core.PassiveName != "Core Passive") {
-            result.actions.push(
-                this._makeAction(core.PassiveName, "corePassive", actorId, "")
-            );
-        }
-        if (core.ActiveName) {
-            result.actions.push(
-                this._makeAction(core.ActiveName, "coreActive", actorId, "")
-            );
+             // Add actions to HUD
+             this.addActions(actions, groupData)
         }
 
-        return result;
-    }
+        /**
+         * Build weapons
+         * @private
+         */
+        #buildWeapons () {
+            if (this.items.size === 0) return
 
-    _weaponsCategory(WepMounts, actorId) {
-        let result = this.initializeEmptyCategory();
-        let macro = "item";
+            const actionTypeId = 'weapon'
+            const weaponsMap = new Map()
 
-        result.id = "weapons";
-        result.name = CoreUtils.i18n("tokenActionHud.weapons");
-
-        let itemSubCats = WepMounts.map((mount, i) => {
-            let subcat = this.initializeEmptySubcategory("Mount_" + i);
-            subcat.name = mount.MountType;
-
-            subcat.actions = mount.Slots.filter((slot) => slot.Weapon !== null).map(
-                (slot) => {
-                    return this._makeAction(
-                        slot.Weapon.Name,
-                        macro,
-                        actorId,
-                        slot.Weapon.RegistryID
-                    );
+            for (const [itemId, itemData] of this.items) {
+                const type = itemData.type
+                
+                if (this.#isUsableItem(itemData)) {
+                    if (itemData.is_weapon()) {
+                        const typeMap = weaponsMap.get(type) ?? new Map()
+                        typeMap.set(itemId, itemData)
+                        weaponsMap.set(type, typeMap)
+                    }
                 }
-            );
+            }
+            
+            for (const [type, typeMap] of weaponsMap) {
+                const groupId = WEAPON_TYPE[type]?.groupId
 
-            return subcat;
-        });
+                if (!groupId) continue
 
-        itemSubCats = [this._basicSubCategory(actorId)].concat(itemSubCats);
+                const groupData = { id: groupId, type: 'system' }
 
-        itemSubCats.forEach((subCat) => {
-            this._combineSubcategoryWithCategory(result, subCat.name, subCat);
-        });
+                // Get actions
+                const actions = [...typeMap].map(([weaponId, weaponData]) => {
+                    const id = weaponId
+                    const name = weaponData.name
+                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                    const encodedValue = [actionTypeId, id].join(this.delimiter)
 
-        return result;
+                    return {
+                        id,
+                        name,
+                        listName,
+                        encodedValue,
+                    }
+                })
+                
+                this.addActions(actions, groupData)
+            }
+        }
+
+        /**
+         * Get actors
+         * @private
+         * @returns {object}
+         */
+        #getActors () {
+            const allowedTypes = ['deployable', 'mech', 'npc', 'pilot']
+            const tokens = coreModule.api.Utils.getControlledTokens()
+            const actors = tokens?.filter(token => token.actor).map((token) => token.actor)
+            if (actors.every((actor) => allowedTypes.includes(actor.type))) {
+                return actors
+            } else {
+                return []
+            }
+        }
+
+        /**
+         * Get tokens
+         * @private
+         * @returns {object}
+         */
+        #getTokens () {
+            const allowedTypes = ['deployable', 'mech', 'npc', 'pilot']
+            const tokens = coreModule.api.Utils.getControlledTokens()
+            const actors = tokens?.filter(token => token.actor).map((token) => token.actor)
+            if (actors.every((actor) => allowedTypes.includes(actor.type))) {
+                return tokens
+            } else {
+                return []
+            }
+        }
+
+        /**
+         * Is usable item
+         * @private
+         * @param {object} item The item
+         * @returns {boolean}
+         */
+        #isUsableItem (item) {
+            switch (item.type) {
+                case ENTRY_TYPE.NPC_FEATURE:
+                    if (!this.showUnchargedNpcFeatures && item.isRecharge() && !item.system.charged) return false
+                case ENTRY_TYPE.MECH_SYSTEM:
+                case ENTRY_TYPE.MECH_WEAPON:
+                    if (!this.showUnloadedWeapons && item.isLoading() && !item.system.loaded) return false
+                    if (!this.showItemsWithoutUses && item.isLimited() && !item.system.uses.value) return false
+                    if (!this.showDestroyedItems || item.system.destroyed) return false
+                default:
+                    if (!this.showUnequippedItems && !item.system.equipped) return false
+            }
+            
+            return true
+        }
     }
-
-    _systemsCategory(loadout, actorId) {
-        let result = this.initializeEmptyCategory();
-        let macro = "item";
-
-        result.id = "systems";
-        result.name = CoreUtils.i18n("tokenActionHud.lancer.systems");
-
-        let itemSubCats = loadout
-            .flatMap((mount) => mount.System)
-            .map((system) => {
-                let subcat = this.initializeEmptySubcategory(system.RegistryID);
-                subcat.name = system.Name;
-
-                let activations = system.Actions.map((action, i) => {
-                    let option = {};
-                    option.Type = "Action";
-                    option.Index = i;
-                    return this._makeAction(
-                        action.Name,
-                        "activation",
-                        actorId,
-                        system.RegistryID,
-                        option
-                    );
-                });
-
-                let deployables = system.Deployables.map((deployable, i) => {
-                    let option = {};
-                    option.Type = "Deployable";
-                    option.Index = i;
-                    return this._makeAction(
-                        deployable.Name,
-                        "activation",
-                        actorId,
-                        system.RegistryID,
-                        option
-                    );
-                });
-
-                subcat.actions = activations.concat(deployables);
-
-                return subcat;
-            });
-
-        itemSubCats.forEach((subCat) => {
-            this._combineSubcategoryWithCategory(result, subCat.name, subCat);
-        });
-
-        return result;
-    }
-}
+})

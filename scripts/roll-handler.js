@@ -1,114 +1,117 @@
-import { CoreRollHandler } from './config.js'
+export let RollHandler = null
 
-export class RollHandler extends CoreRollHandler {
-
+Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
     /**
-     * Handle Action Event
-     * @override
-     * @param {object} event
-     * @param {string} encodedValue
+     * Extends Token Action HUD Core's RollHandler class and handles action events triggered when an action is clicked
      */
-    doHandleActionEvent(event, encodedValue) {
-        let payload = encodedValue.split("|");
+    RollHandler = class RollHandler extends coreModule.api.RollHandler {
+        /**
+         * Handle action click
+         * Called by Token Action HUD Core when an action is left or right-clicked
+         * @override
+         * @param {object} event        The event
+         * @param {string} encodedValue The encoded value
+         */
+        async handleActionClick (event, encodedValue) {
+            const [actionTypeId, actionId] = encodedValue.split(this.delimiter)
 
-        if (payload.length != 3 && payload.length != 4) {
-            super.throwInvalidValueErr();
+            const renderable = ['weapon']
+
+            if (renderable.includes(actionTypeId) && this.isRenderItem()) {
+                return this.doRenderItem(this.actor, actionId)
+            }
+
+            const knownCharacters = ['pilot', 'npc', 'mech', 'deployable']
+
+            // If single actor is selected
+            if (this.actor) {
+                await this.#handleAction(event, this.actor, this.token, actionTypeId, actionId)
+                return
+            }
+
+            const controlledTokens = canvas.tokens.controlled
+                .filter((token) => knownCharacters.includes(token.actor?.type))
+
+            // If multiple actors are selected
+            for (const token of controlledTokens) {
+                const actor = token.actor
+                await this.#handleAction(event, actor, token, actionTypeId, actionId)
+            }
         }
 
-        let macroType = payload[0];
-        let actorID = payload[1];
-        let actionId = payload[2];
-        let option = JSON.parse(payload[3]);
+        /**
+         * Handle action hover
+         * Called by Token Action HUD Core when an action is hovered on or off
+         * @override
+         * @param {object} event        The event
+         * @param {string} encodedValue The encoded value
+         */
+        async handleActionHover (event, encodedValue) {}
 
-        let hasSheet = ["item"];
-        if (this.isRenderItem() && hasSheet.includes(macroType))
-            return this.doRenderItem(actorID, actionId);
+        /**
+         * Handle group click
+         * Called by Token Action HUD Core when a group is right-clicked while the HUD is locked
+         * @override
+         * @param {object} event The event
+         * @param {object} group The group
+         */
+        async handleGroupClick (event, group) {}
 
-        switch (macroType) {
-            case "hase":
-                this._rollHaseMacro(actorID, actionId);
-                break;
-            case "stat":
-                if (actionId == "techattack") {
-                    this._rollTechMacro(actorID);
-                } else if (actionId == "basicattack") {
-                    this._rollBasicAttackMacro();
-                } else {
-                    this._rollStatMacro(actorID, actionId);
+        /**
+         * Handle action
+         * @private
+         * @param {object} event        The event
+         * @param {object} actor        The actor
+         * @param {object} token        The token
+         * @param {string} actionTypeId The action type id
+         * @param {string} actionId     The actionId
+         */
+        async #handleAction (event, actor, token, actionTypeId, actionId) {
+            switch (actionTypeId) {
+            case 'weapon':
+                this.#handleWeaponAction(event, actor, actionId)
+                break
+            }
+        }
+
+        /**
+         * Handle item action
+         * @private
+         * @param {object} event    The event
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleItemAction (event, actor, actionId) {
+            const item = actor.items.get(actionId)
+            item.toChat(event)
+        }
+
+        /**
+         * Handle utility action
+         * @private
+         * @param {object} token    The token
+         * @param {string} actionId The action id
+         */
+        async #handleUtilityAction (token, actionId) {
+            switch (actionId) {
+            case 'endTurn':
+                if (game.combat?.current?.tokenId === token.id) {
+                    await game.combat?.nextTurn()
                 }
-                break;
-            case "frame":
-                if (actionId == "stabilize") {
-                    this._promptStabilizeMacro(actorID);
-                } else {
-                    this._rollOverchargeMacro(actorID);
-                }
-                break;
-            case "item":
-                this._rollWeaponOrFeatureMacro(actorID, actionId, option);
-                break;
-            case "coreBonus":
-                this._rollCoreBonusMacro(option.pilot, actionId);
-                break;
-            case "coreActive":
-                this._rollCoreActiveMacro(actorID);
-                break;
-            case "corePassive":
-                this._rollCorePassiveMacro(actorID);
-                break;
-            case "activation":
-                this._rollActivationMacro(actorID, actionId, option);
-                break;
+                break
+            }
+        }
+        
+        /**
+         * Handle weapon action
+         * @private
+         * @param {object} event    The event
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleWeaponAction(event, actor, actionId) {
+            const weapon = actor.items.get(actionId)
+            weapon.beginWeaponAttackFlow();
         }
     }
-
-    _rollHaseMacro(actorID, action) {
-        game.lancer.prepareStatMacro(actorID, `mm.${action}`);
-    }
-
-    _rollStatMacro(actorID, action) {
-        console.log(action);
-        game.lancer.prepareStatMacro(actorID, `mm.${action}`);
-    }
-
-    _rollTechMacro(actorID) {
-        game.lancer.prepareTechMacro(actorID, null);
-    }
-
-    _rollBasicAttackMacro() {
-        game.lancer.prepareEncodedAttackMacro();
-    }
-
-    _promptStabilizeMacro(actorID) {
-        game.lancer.stabilizeMacro(actorID);
-    }
-
-    _rollOverchargeMacro(actorID) {
-        game.lancer.prepareOverchargeMacro(actorID);
-    }
-
-    _rollWeaponOrFeatureMacro(actorID, itemId, option) {
-        game.lancer.prepareItemMacro(actorID, itemId, option);
-    }
-
-    _rollCoreBonusMacro(pilotID, itemID) {
-        game.lancer.prepareItemMacro(pilotID, itemID);
-    }
-
-    _rollCoreActiveMacro(actorID) {
-        game.lancer.prepareCoreActiveMacro(actorID);
-    }
-
-    _rollCorePassiveMacro(actorID) {
-        game.lancer.prepareCorePassiveMacro(actorID);
-    }
-
-    _rollActivationMacro(actorID, itemId, option) {
-        game.lancer.prepareActivationMacro(
-            actorID,
-            itemId,
-            option.Type,
-            option.Index
-        );
-    }
-}
+})

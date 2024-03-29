@@ -1,8 +1,14 @@
 {
     "tokenActionHud": {
       "lancer": {
+        "attacks": "Attacks",
         "basic": "Basic",
         "basicAttack": "Basic Attack",
+        "bonds": "Bonds",
+        "combat": "Combat",
+        "coreBonuses": "Core Bonuses",
+        "corePower": "Core Power",
+        "deployables": "Deployables",
         "engineering": "Engineering",
         "frame": "Frame",
         "gear": "Gear",
@@ -10,17 +16,28 @@
         "hase": "HASE",
         "hull": "Hull",
         "mech": "Mech",
+        "mechWeapons": "Mech Weapons",
         "overcharge": "Overcharge",
         "pilot": "Pilot",
+        "pilotGear": "Pilot Gear",
+        "pilotWeapons": "Pilot Weapons",
         "rank": "Rank",
+        "repair": "Repair",
         "skillTriggers": "Skill Triggers",
         "stabilize": "Stabilize",
         "stat": "Stat",
         "stats": "Stats",
+        "status": "Status",
+        "statuses": "statuses",
+        "system": "System",
         "systems": "Systems",
         "talents": "Talents",
         "techAttack": "Tech Attack",
         "techs": "Techs",
+        "traits": "Traits",
+        "utility": "Utility",
+        "weapon": "Weapon",
+        "weaponMods": "Weapon Mods",
         "weapons": "Weapons"
       }
     }
