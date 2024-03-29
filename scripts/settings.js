@@ -1,18 +1,9 @@
-// YAGNI, but whatever, it was in the base module so it's here now
-export function register(updateFunc) {
-    const appName = 'token-action-hud-lancer';
+import { MODULE } from './constants.js'
 
-    // Use this format for adding settings:
-    //
-    // game.settings.register(appName, 'Setting ID', {
-    //     name: "Setting Name",
-    //     hint: "Setting Hint",
-    //     scope: 'client',
-    //     config: true,
-    //     type: Boolean,   // or whatever type it should be
-    //     default: false,  // use appropriate default for setting type
-    //     onChange: (value) => {
-    //         updateFunc(value)
-    //     }
-    // })
+/**
+ * Register module settings
+ * Called by Token Action HUD Core to register Token Action HUD system module settings
+ * @param {function} coreUpdate Token Action HUD Core update function
+ */
+export function register (coreUpdate) {
 }

@@ -1,6 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ITEM_TYPE } from './constants.js'
-import { Utils } from './utils.js'
+import { ACTION_TYPE, ENTRY_TYPE, WEAPON_TYPE } from './constants.js'
 
 export let ActionHandler = null
 
@@ -16,6 +15,16 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
         // Initialize items variable
         items = null
+
+        // Initialize setting variables
+        showDestroyedItems = null
+        showItemsWithoutActivations = null
+        showItemsWithoutUses = null
+        showNpcFeaturesWithoutActivations = null
+        showUnchargedNpcFeatures = null
+        showUnequippedItems = null
+        showUnloadedWeapons = null
+        showUsedCorePower = null
 
         // Initialize groupIds variables
         activationgroupIds = null
@@ -46,7 +55,15 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 this.items = items
             }
 
-             // Set settings variables TODO
+            // Set settings variables TODO
+            //this.showDestroyedItems = Utils.getSetting('showDestroyedItems')
+            //this.showItemsWithoutActivations = Utils.getSetting('showItemsWithoutActivations')
+            //this.showItemsWithoutUses = Utils.getSetting('showItemsWithoutUses')
+            //this.showNpcFeaturesWithoutActivations = Utils.getSetting('showNpcFeaturesWithoutActivations')
+            //this.showUnequippedItems = Utils.getSetting('showUnequippedItems')
+            //this.showUnchargedNpcFeatures = Utils.getSetting('showUnchargedNpcFeatures')
+            //this.showUnloadedWeapons = Utils.getSetting('showUnloadedWeapons')
+            //this.showUsedCorePower = Utils.getSetting('showUsedCorePower')
 
             this.activationgroupIds = [
                 'quick-actions',
@@ -55,7 +72,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 'protocols',
                 'free-actions',
                 'quick-tech',
-                'full-tech'
+                'full-tech',
             ]
 
             this.systemGroupIds = [
@@ -68,27 +85,29 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 'techs',
                 'systems',
                 'weapons',
-                'traits'
+                'traits',
             ]
 
-            if (this.actorType === 'pilot' || this.actorType === 'mech') {
-                await this.#buildCharacterActions()
-            } else if (this.actorType === 'deployable') {
-                await this.#buildDeployableActions()
-            } else if (this.actorType === 'npc') {
-                await this.#buildNpcActions()
-            } else if (!this.actor) {
+            switch (this.actorType) {
+                case ENTRY_TYPE.MECH:
+                    this.#buildMechActions()
+                    break
+                case ENTRY_TYPE.PILOT:
+                    this.#buildPilotActions()
+                    break
+                case ENTRY_TYPE.NPC:
+                    this.#buildNpcActions()
+                    break
+                case ENTRY_TYPE.DEPLOYABLE:
+                    this.#buildDeployableActions()
+                    break
+                default:
+                    break
+            }
+
+            if (!this.actor) {
                 this.#buildMultipleTokenActions()
             }
-        }
-
-        /**
-         * Build character actions
-         * @private
-         */
-        #buildCharacterActions () {
-            this.build
-            this.#buildStatuses()
         }
 
         /**
@@ -96,7 +115,16 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @private
          */
         #buildDeployableActions () {
-            this.#buildInventory();
+        }
+
+        /**
+         * Build mech actions
+         * @private
+         */
+        #buildMechActions () {
+            //this.#buildHase()
+            //this.#buildStatuses()
+            this.#buildWeapons()
         }
 
         /**
@@ -112,56 +140,21 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @private
          */
         #buildNpcActions() {
-
+            //this.#buildHase()
+            //this.#buildNpcFeatures()
+            //this.#buildStatuses()
+            this.#buildWeapons()
         }
 
         /**
-         * Build inventory
+         * Build pilot actions
          * @private
          */
-        #buildInventory () {
-            if (this.items.size === 0) return
-
-            const actionTypeId = 'item'
-            const inventoryMap = new Map()
-
-            for (const [itemId, itemData] of this.items) {
-                const type = itemData.type
-                const equipped = itemData.equipped
-
-                if (equipped || this.displayUnequipped) {
-                    const typeMap = inventoryMap.get(type) ?? new Map()
-                    typeMap.set(itemId, itemData)
-                    inventoryMap.set(type, typeMap)
-                }
-            }
-
-            for (const [type, typeMap] of inventoryMap) {
-                const groupId = ITEM_TYPE[type]?.groupId
-
-                if (!groupId) continue
-
-                const groupData = { id: groupId, type: 'system' }
-
-                // Get actions
-                const actions = [...typeMap].map(([itemId, itemData]) => {
-                    const id = itemId
-                    const name = itemData.name
-                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
-                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
-                    const encodedValue = [actionTypeId, id].join(this.delimiter)
-
-                    return {
-                        id,
-                        name,
-                        listName,
-                        encodedValue
-                    }
-                })
-
-                // TAH Core method to add actions to the action list
-                this.addActions(actions, groupData)
-            }
+        #buildPilotActions () {
+            //this.#buildHase()
+            //this.#buildPilotInventory()
+            //this.#buildPilotStats()
+            //this.#buildStatuses()
         }
 
         /**
@@ -213,7 +206,56 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
              // Add actions to HUD
              this.addActions(actions, groupData)
-         }
+        }
+
+        /**
+         * Build weapons
+         * @private
+         */
+        #buildWeapons () {
+            if (this.items.size === 0) return
+
+            const actionTypeId = 'weapon'
+            const weaponsMap = new Map()
+
+            for (const [itemId, itemData] of this.items) {
+                const type = itemData.type
+                
+                if (this.#isUsableItem(itemData)) {
+                    if (itemData.is_weapon()) {
+                        const typeMap = weaponsMap.get(type) ?? new Map()
+                        typeMap.set(itemId, itemData)
+                        weaponsMap.set(type, typeMap)
+                    }
+                }
+            }
+            
+            for (const [type, typeMap] of weaponsMap) {
+                const groupId = WEAPON_TYPE[type]?.groupId
+
+                if (!groupId) continue
+
+                const groupData = { id: groupId, type: 'system' }
+
+                // Get actions
+                const actions = [...typeMap].map(([weaponId, weaponData]) => {
+                    const id = weaponId
+                    const name = weaponData.name
+                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                    const encodedValue = [actionTypeId, id].join(this.delimiter)
+
+                    return {
+                        id,
+                        name,
+                        listName,
+                        encodedValue,
+                    }
+                })
+                
+                this.addActions(actions, groupData)
+            }
+        }
 
         /**
          * Get actors
@@ -221,7 +263,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @returns {object}
          */
         #getActors () {
-            const allowedTypes = ['character', 'npc']
+            const allowedTypes = ['deployable', 'mech', 'npc', 'pilot']
             const tokens = coreModule.api.Utils.getControlledTokens()
             const actors = tokens?.filter(token => token.actor).map((token) => token.actor)
             if (actors.every((actor) => allowedTypes.includes(actor.type))) {
@@ -237,7 +279,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @returns {object}
          */
         #getTokens () {
-            const allowedTypes = ['character', 'npc']
+            const allowedTypes = ['deployable', 'mech', 'npc', 'pilot']
             const tokens = coreModule.api.Utils.getControlledTokens()
             const actors = tokens?.filter(token => token.actor).map((token) => token.actor)
             if (actors.every((actor) => allowedTypes.includes(actor.type))) {
@@ -245,6 +287,28 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             } else {
                 return []
             }
+        }
+
+        /**
+         * Is usable item
+         * @private
+         * @param {object} item The item
+         * @returns {boolean}
+         */
+        #isUsableItem (item) {
+            switch (item.type) {
+                case ENTRY_TYPE.NPC_FEATURE:
+                    if (!this.showUnchargedNpcFeatures && item.isRecharge() && !item.system.charged) return false
+                case ENTRY_TYPE.MECH_SYSTEM:
+                case ENTRY_TYPE.MECH_WEAPON:
+                    if (!this.showUnloadedWeapons && item.isLoading() && !item.system.loaded) return false
+                    if (!this.showItemsWithoutUses && item.isLimited() && !item.system.uses.value) return false
+                    if (!this.showDestroyedItems || item.system.destroyed) return false
+                default:
+                    if (!this.showUnequippedItems && !item.system.equipped) return false
+            }
+            
+            return true
         }
     }
 })

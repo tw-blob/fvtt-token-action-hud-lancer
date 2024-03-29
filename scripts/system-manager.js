@@ -66,10 +66,27 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * Register Token Action HUD system module settings
          * Called by Token Action HUD Core
          * @override
-         * @param {function} onChangeFunction The Token Action HUD Core update function
+         * @param {function} coreUpdate The Token Action HUD Core update function
          */
-        registerSettings (onChangeFunction) {
-            systemSettings.register(onChangeFunction)
+        registerSettings (coreUpdate) {
+            systemSettings.register(coreUpdate)
+        }
+
+        /**
+         * Returns styles to Token Action HUD Core
+         * Called by Token Action HUD Core
+         * @override
+         * @returns {object} The TAH system styles
+         */
+        registerStyles () {
+            return {
+                template: {
+                    class: 'tah-style-lancer-style', // The class to add to first DIV element
+                    file: 'tah-lancer-style', // The file without the css extension
+                    moduleId: MODULE.ID, // The module ID
+                    name: 'LANCER Style' // The name to display in the Token Action HUD Core 'Style' module setting
+                }
+            }
         }
     }
 })

@@ -19,11 +19,12 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 id: 'pilot',
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.pilot'),
                 groups: [
-                    { ...groups.skills, nestId: 'pilot_skills' },
+                    { ...groups.skillTriggers, nestId: 'pilot_skill-triggers' },
                     { ...groups.grit, nestId: 'pilot_grit' },
                     { ...groups.talents, nestId: 'pilot_talents' },
                     { ...groups.pilotGear, nestId: 'pilot_pilot-gear' },
                     { ...groups.pilotWeapons, nestId: 'pilot_pilot-weapons' },
+                    { ...groups.bonds, nestId: 'pilot_bonds' },
                 ]
             },
             {
@@ -32,9 +33,9 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.mech'),
                 groups: [
                     { ...groups.hase, nestId: 'mech_hase' },
-                    { ...groups.frameTraits, nestId: 'mech_frame-traits' },
                     { ...groups.coreBonuses, nestId: 'mech_core-bonuses' },
                     { ...groups.corePower, nestId: 'mech_core-power' },
+                    { ...groups.traits, nestId: 'mech_traits' },
                 ]
             },
             {
@@ -42,6 +43,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 id: 'weapon',
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.weapon'),
                 groups: [
+                    { ...groups.integratedMounts, nestId: 'weapon_integrated-mounts' },
                     { ...groups.mount1, nestId: 'weapon_mount-1' },
                     { ...groups.mount2, nestId: 'weapon_mount-2' },
                     { ...groups.mount3, nestId: 'weapon_mount-3' },
@@ -54,7 +56,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.system'),
                 groups: [
                     { ...groups.techs, nestId: 'system_techs' },
-                    { ...groups.systemActions, nestId: 'system_systemActions' },
+                    { ...groups.systems, nestId: 'system_systems' },
                     { ...groups.deployables, nestId: 'system_deployables' },
                 ]
             },
@@ -72,7 +74,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 id: 'status',
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.status'),
                 groups: [
-                    { ...groups.statuses, nestId: 'status_status' }
+                    { ...groups.statuses, nestId: 'status_statuses' }
                 ]
             }
         ],
