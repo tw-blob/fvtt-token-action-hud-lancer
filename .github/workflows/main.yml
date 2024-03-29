@@ -1,8 +1,10 @@
 name: Release Creation
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+    - main
+    - release/*
 
 jobs:
   build:
