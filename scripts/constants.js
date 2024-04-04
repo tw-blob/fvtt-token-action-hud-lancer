@@ -65,7 +65,8 @@ export const GROUP = {
     reactions: { id: 'reactions', name: 'tokenActionHud.lancer.reactions', type: 'system' },
     repair: { id: 'repair', name: 'tokenActionHud.lancer.repair', type: 'system' },
     skillTriggers: { id: 'skill-triggers', name: 'tokenActionHud.lancer.skillTriggers', type: 'system' },
-    statuses: { id: 'statuses', name: 'tokenActionHud.lancer.status', type: 'system' },
+    stats: { id: 'stats', name: 'tokenActionHud.lancer.stats', type: 'system' },
+    statuses: { id: 'statuses', name: 'tokenActionHud.lancer.statuses', type: 'system' },
     systems: { id: 'systems', name: 'tokenActionHud.lancer.systems', type: 'system' },
     talents: { id: 'talents', name: 'tokenActionHud.lancer.talents', type: 'system' },
     techs: { id: 'techs', name: 'tokenActionHud.lancer.techs', type: 'system' },
@@ -104,6 +105,15 @@ export const NPC_FEATURE_TYPE = {
     Tech: { groupId: 'techs', actionType: 'tech'},
     Trait: { groupId: 'traits', actionType: 'system' },
     Weapon: { groupId: 'mech-weapons', actionType: 'weapon' },
+}
+
+export const STAT_TYPE = {
+    hull: 'tokenActionHud.lancer.hull',
+    agi: 'tokenActionHud.lancer.agi',
+    sys: 'tokenActionHud.lancer.sys',
+    eng: 'tokenActionHud.lancer.eng',
+    grit: 'tokenActionHud.lancer.grit',
+    tier: 'tokenActionHud.lancer.tier',
 }
 
 export const ITEM_TYPE = {

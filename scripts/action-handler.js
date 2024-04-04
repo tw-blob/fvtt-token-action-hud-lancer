@@ -1,5 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ENTRY_TYPE, NPC_FEATURE_TYPE, WEAPON_TYPE } from './constants.js'
+import { ACTION_TYPE, ENTRY_TYPE, NPC_FEATURE_TYPE, STAT_TYPE, WEAPON_TYPE } from './constants.js'
 
 export let ActionHandler = null
 
@@ -30,6 +30,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         groupIds = null
         activationgroupIds = null
         systemGroupIds = null
+        statGroupIds = null
         npcFeatureIds = null
 
         // Initialize action variables
@@ -114,7 +115,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @private
          */
         #buildMechActions () {
-            this.#buildHase()
+            this.#buildStats()
             this.#buildStatuses()
             this.#buildWeaponMounts()
         }
@@ -125,7 +126,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @returns {object}
          */
         #buildMultipleTokenActions () {
-            this.#buildHase()
+            this.#buildStats()
             this.#buildStatuses()
         }
 
@@ -134,8 +135,8 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @private
          */
         #buildNpcActions() {
-            this.#buildHase()
             this.#buildNpcFeatures()
+            this.#buildStats()
             this.#buildStatuses()
         }
 
@@ -145,14 +146,42 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @param {object} pilot the pilot
          */
         #buildPilotActions (pilot) {
-            this.#buildHase()
             //this.#buildPilotInventory()
             //this.#buildPilotStats()
+            this.#buildStats()
             this.#buildStatuses()
         }
 
-        #buildHase () {
-            
+        #buildStats () {
+            const actionType = 'stat'
+
+            const stats = {
+                hull: 'system.hull',
+                agi: 'system.agi',
+                sys: 'system.sys',
+                eng: 'system.eng',
+                grit: 'system.grit',
+                tier: 'system.tier',
+            }
+
+            const actions = Object.entries(stats).map(([key, path]) => {
+                if (!this.actor.system[key]) return
+
+                const name = coreModule.api.Utils.i18n(STAT_TYPE[key])
+                const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? ''
+                const listName = `${actionTypeName}${name}`
+                const encodedValue = [actionType, path].join(this.delimiter)
+
+                return {
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }
+            })
+
+            const groupData = { id: 'stats', type: 'system' }
+            this.addActions(actions, groupData)
         }
 
         /**

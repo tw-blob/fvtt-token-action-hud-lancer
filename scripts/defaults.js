@@ -54,9 +54,8 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 id: 'skills',
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.skills'),
                 groups: [
-                    { ...groups.hase, nestId: 'skills_hase' },
+                    { ...groups.stats, nestId: 'skills_stats' },
                     { ...groups.skillTriggers, nestId: 'skills_skill-triggers' },
-                    { ...groups.grit, nestId: 'skills_grit' },
                 ]
             },
             {

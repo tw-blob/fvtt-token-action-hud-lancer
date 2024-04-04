@@ -76,6 +76,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     break
                 case 'system':
                     this.#handleSystemAction(actor, actionId)
+                    break
+                case 'stat':
+                    this.#handleStatAction(actor, actionId)
+                    break
             }
         }
 
@@ -105,6 +109,16 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 }
                 break
             }
+        }
+
+        /**
+         * Handle stat action
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleStatAction(actor, actionId) {
+            actor.beginStatFlow(actionId);
         }
 
         /**
