@@ -1,5 +1,5 @@
 // For distribution
-const coreModulePath = '../../token-action-hud-core/scripts/token-action-hud-core.min.js'
+const coreModulePath = '../../token-action-hud-core/dist/token-action-hud-core.min.js'
 const coreModule = await import(coreModulePath)
 export const CoreActionHandler = coreModule.ActionHandler
 export const CoreActionListExtender = coreModule.ActionListExtender

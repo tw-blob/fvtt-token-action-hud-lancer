@@ -21,7 +21,23 @@ export const REQUIRED_CORE_MODULE_VERSION = '1.5'
  * Action types
  */
 export const ACTION_TYPE = {
+    system: 'tokenActionHud.lancer.system',
+    tech: 'tokenActionHud.lancer.tech',
     weapon: 'tokenActionHud.lancer.weapon',
+}
+
+export const ACTIVATION_TYPE = {
+    None = "None",
+    Passive = "Passive",
+    Quick = "Quick",
+    QuickTech = "Quick Tech",
+    Invade = "Invade",
+    Full = "Full",
+    FullTech = "Full Tech",
+    Other = "Other",
+    Reaction = "Reaction",
+    Protocol = "Protocol",
+    Free = "Free",
 }
 
 /**
@@ -29,24 +45,32 @@ export const ACTION_TYPE = {
  */
 export const GROUP = {
     attacks: { id: 'attacks', name: 'tokenActionHud.lancer.attacks', type: 'system' },
+    basicAttack: { id: 'basic-attack', name: 'tokenActionHud.lancer.basicAttack', type: 'system' },
+    basicTech: { id: 'basic-tech', name: 'tokenActionHud.lancer.basicTech', type: 'system' },
     bonds: { id: 'bonds', name: 'tokenActionHud.lancer.bonds', type: 'system' },
     combat: { id: 'combat', name: 'tokenActionHud.lancer.combat', type: 'system' },
     coreBonuses: { id: 'core-bonuses', name: 'tokenActionHud.lancer.coreBonuses', type: 'system' },
     corePower: { id: 'core-power', name: 'tokenActionHud.lancer.corePower', type: 'system' },
     deployables: { id: 'deployables', name: 'tokenActionHud.lancer.deployables', type: 'system' },
+    freeActions: { id: 'free-actions', name: 'tokenActionHud.lancer.freeActions', type: 'system' },
+    fullActions: { id: 'full-actions', name: 'tokenActionHud.lancer.fullActions', type: 'system' },
     grit: { id: 'grit', name: 'tokenActionHud.lancer.grit', type: 'system' },
     hase: { id: 'hase', name: 'tokenActionHud.lancer.hase', type: 'system' },
+    invades: { id: 'invades', name: 'tokenActionHud.lancer.invades', type: 'system' },
     mechWeapons: { id: 'mech-weapons', name: 'tokenActionHud.lancer.mechWeapons', type: 'system' },
     pilotGear: { id: 'pilot-gear', name: 'tokenActionHud.lancer.pilotGear', type: 'system' },
     pilotWeapons: { id: 'pilot-weapons', name: 'tokenActionHud.lancer.pilotWeapons', type: 'system' },
+    protocols: { id: 'protocols', name: 'tokenActionHud.lancer.protocols', type: 'system' },
+    quickActions: { id: 'quick-actions', name: 'tokenActionHud.lancer.quickActions', type: 'system' },
+    reactions: { id: 'reactions', name: 'tokenActionHud.lancer.reactions', type: 'system' },
     repair: { id: 'repair', name: 'tokenActionHud.lancer.repair', type: 'system' },
-    skillTriggers: { id: 'skill-triggers', name: 'tokenActionHud.lancer.skillTiggers', type: 'system' },
+    skillTriggers: { id: 'skill-triggers', name: 'tokenActionHud.lancer.skillTriggers', type: 'system' },
     statuses: { id: 'statuses', name: 'tokenActionHud.lancer.status', type: 'system' },
     systems: { id: 'systems', name: 'tokenActionHud.lancer.systems', type: 'system' },
     talents: { id: 'talents', name: 'tokenActionHud.lancer.talents', type: 'system' },
     techs: { id: 'techs', name: 'tokenActionHud.lancer.techs', type: 'system' },
     traits: { id: 'traits', name: 'tokenActionHud.lancer.traits', type: 'system' },
-    weaponMods: { id: 'weapon-mods', name: 'tokenActionHud.lancer.weapon-mods', type: 'system' },
+    weaponMods: { id: 'weapon-mods', name: 'tokenActionHud.lancer.weaponMods', type: 'system' },
 }
 
 export const ENTRY_TYPE = {
@@ -75,11 +99,14 @@ export const ENTRY_TYPE = {
 }
 
 export const NPC_FEATURE_TYPE = {
-    system: { groupId: 'system-actions' },
+    Reaction: { groupId: 'reactions', actionType: 'system' },
+    System: { groupId: 'systems', actionType: 'system' },
+    Tech: { groupId: 'techs', actionType: 'tech'},
+    Trait: { groupId: 'traits', actionType: 'system' },
+    Weapon: { groupId: 'mech-weapons', actionType: 'weapon' },
 }
 
-export const WEAPON_TYPE = {
-    npc_feature: { groupId: 'mech-weapons' },
-    mech_wepon: { groupId: 'mech-weapons' },
+export const ITEM_TYPE = {
+    mech_weapon: { groupId: 'mech-weapons' },
     pilot_weapon: { groupId: 'pilot-weapons' },
 }

@@ -68,9 +68,14 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         async #handleAction (event, actor, token, actionTypeId, actionId) {
             switch (actionTypeId) {
-            case 'weapon':
-                this.#handleWeaponAction(event, actor, actionId)
-                break
+                case 'weapon':
+                    this.#handleWeaponAction(actor, actionId)
+                    break
+                case 'tech':
+                    this.#handleTechAction(actor, actionId)
+                    break
+                case 'system':
+                    this.#handleSystemAction(actor, actionId)
             }
         }
 
@@ -101,15 +106,36 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 break
             }
         }
+
+        /**
+         * Handle system action
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleSystemAction(actor, actionId) {
+            const system = actor.items.get(actionId)
+            system.beginSystemFlow();
+        }
+
+        /**
+         * Handle tech action
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleTechAction(actor, actionId) {
+            const tech = actor.items.get(actionId)
+            tech.beginTechAttackFlow();
+        }
         
         /**
          * Handle weapon action
          * @private
-         * @param {object} event    The event
          * @param {object} actor    The actor
          * @param {string} actionId The action id
          */
-        #handleWeaponAction(event, actor, actionId) {
+        #handleWeaponAction(actor, actionId) {
             const weapon = actor.items.get(actionId)
             weapon.beginWeaponAttackFlow();
         }
