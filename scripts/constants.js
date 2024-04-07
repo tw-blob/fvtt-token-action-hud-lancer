@@ -21,23 +21,24 @@ export const REQUIRED_CORE_MODULE_VERSION = '1.5'
  * Action types
  */
 export const ACTION_TYPE = {
+    activation: 'tokenActionHud.lancer.activation',
     system: 'tokenActionHud.lancer.system',
     tech: 'tokenActionHud.lancer.tech',
     weapon: 'tokenActionHud.lancer.weapon',
 }
 
 export const ACTIVATION_TYPE = {
-    None = "None",
-    Passive = "Passive",
-    Quick = "Quick",
-    QuickTech = "Quick Tech",
-    Invade = "Invade",
-    Full = "Full",
-    FullTech = "Full Tech",
-    Other = "Other",
-    Reaction = "Reaction",
-    Protocol = "Protocol",
-    Free = "Free",
+    "None": { groupId: 'other-actions' },
+    "Passive": { groupId: 'other-actions'},
+    "Quick": { groupId: 'quick-actions' },
+    "Quick Tech": { groupId: 'quick-techs' },
+    "Invade": { groupId: 'invades' },
+    "Full": { groupId: 'full-actions' },
+    "Full Tech": { groupId: 'full-techs' },
+    "Other": { groupId: 'other-actions' },
+    "Reaction": { groupId: 'reactions' },
+    "Protocol": { groupId: 'protocols' },
+    "Free": { groupId: 'free-actions' },
 }
 
 /**
@@ -99,6 +100,8 @@ export const ENTRY_TYPE = {
     BOND: 'bond',
 }
 
+export const ID_DELIMITER = '>'
+
 export const NPC_FEATURE_TYPE = {
     Reaction: { groupId: 'reactions', actionType: 'system' },
     System: { groupId: 'systems', actionType: 'system' },
@@ -117,6 +120,7 @@ export const STAT_TYPE = {
 }
 
 export const ITEM_TYPE = {
-    mech_weapon: { groupId: 'mech-weapons' },
-    pilot_weapon: { groupId: 'pilot-weapons' },
+    mech_weapon: { groupId: 'mech-weapons', actionType: 'weapon' },
+    pilot_weapon: { groupId: 'pilot-weapons', actionType: 'weapon' },
+    weapon_mod: { groupId: 'weapon-mods', actionType: 'weapon' },
 }

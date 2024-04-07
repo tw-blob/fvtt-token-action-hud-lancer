@@ -1,5 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ENTRY_TYPE, NPC_FEATURE_TYPE, STAT_TYPE, WEAPON_TYPE } from './constants.js'
+import { ACTION_TYPE, ACTIVATION_TYPE, ENTRY_TYPE, ITEM_TYPE, NPC_FEATURE_TYPE, STAT_TYPE, WEAPON_TYPE } from './constants.js'
 
 export let ActionHandler = null
 
@@ -152,36 +152,28 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             this.#buildStatuses()
         }
 
-        #buildStats () {
-            const actionType = 'stat'
+        /**
+         * Build npc features
+         * @private
+         * @param {object} items the items
+         */
+        #buildActivations (items) {
+            const activationsMap = new Map()
 
-            const stats = {
-                hull: 'system.hull',
-                agi: 'system.agi',
-                sys: 'system.sys',
-                eng: 'system.eng',
-                grit: 'system.grit',
-                tier: 'system.tier',
-            }
+            const nonActivations = [
+                'None',
+                'Passive',
+                'Other',
+            ]
 
-            const actions = Object.entries(stats).map(([key, path]) => {
-                if (!this.actor.system[key]) return
-
-                const name = coreModule.api.Utils.i18n(STAT_TYPE[key])
-                const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? ''
-                const listName = `${actionTypeName}${name}`
-                const encodedValue = [actionType, path].join(this.delimiter)
-
-                return {
-                    id,
-                    name,
-                    listName,
-                    encodedValue,
+            for (const [key, value] of items) {
+                for (const action of items.system.actions) {
+                    const activationType = action.activation
+                    const groupId = ACTIVATION_TYPE[activationType]
+                    if (!activationsMap.has(groupId)) activationsMap.set(groupId, new Set())
+                    activationsMap.get(groupId).add(action)
                 }
-            })
-
-            const groupData = { id: 'stats', type: 'system' }
-            this.addActions(actions, groupData)
+            }
         }
 
         /**
@@ -228,6 +220,43 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 
                 this.addActions(actions, groupData)
             }
+        }
+
+        /**
+         * Build mech stats
+         * @private
+         */
+        #buildStats () {
+            const actionType = 'stat'
+
+            const stats = {
+                hull: 'system.hull',
+                agi: 'system.agi',
+                sys: 'system.sys',
+                eng: 'system.eng',
+                grit: 'system.grit',
+                tier: 'system.tier',
+            }
+
+            const actions = Object.entries(stats).map(([key, path]) => {
+                const hasStat = this.actors.every((actor) => actor.system[key] !== undefined)
+                if (!hasStat) return
+
+                const name = coreModule.api.Utils.i18n(STAT_TYPE[key])
+                const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? ''
+                const listName = `${actionTypeName}${name}`
+                const encodedValue = [actionType, path].join(this.delimiter)
+
+                return {
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }
+            })
+
+            const groupData = { id: 'stats', type: 'system' }
+            this.addActions(actions, groupData)
         }
 
         /**
@@ -282,6 +311,14 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
+         * Build techs
+         * @private
+         */
+        #buildTechs () {
+
+        }
+
+        /**
          * Build weapon mounts
          * @private
          */
@@ -306,7 +343,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             }
 
             this.#buildWeapons(weaponsMap, ENTRY_TYPE.MECH_WEAPON)
-            this.#buildWeaponMods(weaponModsMap)
+            //this.#buildWeapons(weaponModsMap, ENTRY_TYPE.WEAPON_MOD)
         }
 
         /**
@@ -318,10 +355,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         #buildWeapons (items, type) {
             if (items.size === 0) return
 
-            const actionTypeId = 'weapon'
+            const actionTypeId = ITEM_TYPE[type]?.actionType
             const groupId = ITEM_TYPE[type]?.groupId
 
-            if (!groupId) return
+            if (!groupId || !actionTypeId) return
 
             const groupData = { id: groupId, type: 'system' }
             const weapons = coreModule.api.Utils.sortItemsByName(items)

@@ -1,3 +1,5 @@
+import { ID_DELIMITER } from "./constants"
+
 export let RollHandler = null
 
 Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
@@ -68,19 +70,110 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         async #handleAction (event, actor, token, actionTypeId, actionId) {
             switch (actionTypeId) {
-                case 'weapon':
-                    this.#handleWeaponAction(actor, actionId)
+                case 'activation':
+                case 'talent':
+                    this.#handleActivation(actor, actionId)
                     break
-                case 'tech':
-                    this.#handleTechAction(actor, actionId)
+                case 'basic-attack':
+                    this.#handleBasicAttack(actor)
                     break
-                case 'system':
-                    this.#handleSystemAction(actor, actionId)
+                case 'basic-tech':
+                    this.#handleBasicTech(actor)
+                    break
+                case 'bond':
+                    this.#handleBondAction(actor, actionId)
+                    break
+                case 'core':
+                    this.#handleCoreAction(actor, actionId)
+                    break
+                case 'full-repair':
+                    this.#handleFullRepair(actor)
+                    break
+                case 'overcharge':
+                    this.#handleOvercharge(actor)
+                    break
+                case 'overheat':
+                    this.#handleOverheat(actor)
+                    break
+                case 'skill':
+                    this.#handleSkillAction(actor, actionId)
                     break
                 case 'stat':
                     this.#handleStatAction(actor, actionId)
                     break
+                case 'structure':
+                    this.#handleStructure(actor)
+                    break
+                case 'system':
+                    this.#handleSystemAction(actor, actionId)
+                    break
+                case 'tech':
+                    this.#handleTechAction(actor, actionId)
+                    break
+                case 'weapon':
+                    this.#handleWeaponAction(actor, actionId)
+                    break
             }
+        }
+
+        /**
+         * Handle item activation
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleActivation (actor, actionId) {
+            const activationParts = actionId.split(ID_DELIMITER)
+            const itemId = activationParts[0]
+            const dataPath = activationParts[1]
+            const item = actor.items.get(itemId)
+            item.beginActivationFlow(dataPath)
+        }
+
+        /**
+         * Handle basic attack
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleBasicAttack (actor) {
+            actor.beginBasicAttackFlow()
+        }
+
+        /**
+         * Handle basic tech
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleBasicTech (actor) {
+            actor.beginBasicTechFlow()
+        }
+
+        /**
+         * Handle bond action
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleBondAction (actor, actionId) {
+            const bondParts = actionId.split(ID_DELIMITER)
+            const itemId = bondParts[0]
+            const dataPath = bondParts[1]
+            const item = actor.items.get(itemId)
+            item.beginBondPowerFlow(dataPath)
+        }
+
+        /**
+         * Handle core activation
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         */
+        #handleCoreAction (actor, actionId) {
+            const coreParts = actionId.split(ID_DELIMITER)
+            const itemId = coreParts[0]
+            const dataPath = coreParts[1]
+            const item = actor.items.get(itemId)
+            item.beginCoreActiveFlow(dataPath)
         }
 
         /**
@@ -103,6 +196,11 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         async #handleUtilityAction (token, actionId) {
             switch (actionId) {
+            case 'startTurn':
+                if (game.combat?.current?.tokenId === token.id) {
+                    await game.combat?.startTurn()
+                }
+                break
             case 'endTurn':
                 if (game.combat?.current?.tokenId === token.id) {
                     await game.combat?.nextTurn()
@@ -112,23 +210,70 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
+         * Handle full repair
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleFullRepair (actor) {
+            actor.beginFullRepairFlow()
+        }
+
+        /**
+         * Handle overcharge action
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleOvercharge (actor) {
+            actor.beginOverchargeFlow()
+        }
+
+        /**
+         * Handle overcharge action
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleOverheat (actor) {
+            actor.beginOverheatFlow()
+        }
+
+        /**
          * Handle stat action
          * @private
          * @param {object} actor    The actor
-         * @param {string} actionId The action id
+         * @param {string} statPath The stat path
          */
-        #handleStatAction(actor, actionId) {
-            actor.beginStatFlow(actionId);
+        #handleStatAction(actor, statPath) {
+            actor.beginStatFlow(statPath);
+        }
+
+        /**
+         * Handle skill action
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} itemId   The item id
+         */
+        #handleSkillAction(actor, itemId) {
+            const skill = actor.items.get(itemId)
+            skill.beginSkillFlow()
+        }
+
+        /**
+         * Handle structure
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleStructure (actor) {
+            actor.beginStructureFlow()
         }
 
         /**
          * Handle system action
          * @private
          * @param {object} actor    The actor
-         * @param {string} actionId The action id
+         * @param {string} itemId   The item id
          */
-        #handleSystemAction(actor, actionId) {
-            const system = actor.items.get(actionId)
+        #handleSystemAction(actor, itemId) {
+            const system = actor.items.get(itemId)
             system.beginSystemFlow();
         }
 
@@ -136,10 +281,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * Handle tech action
          * @private
          * @param {object} actor    The actor
-         * @param {string} actionId The action id
+         * @param {string} itemId   The item id
          */
-        #handleTechAction(actor, actionId) {
-            const tech = actor.items.get(actionId)
+        #handleTechAction(actor, itemId) {
+            const tech = actor.items.get(itemId)
             tech.beginTechAttackFlow();
         }
         
@@ -147,10 +292,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * Handle weapon action
          * @private
          * @param {object} actor    The actor
-         * @param {string} actionId The action id
+         * @param {string} itemId   The item id
          */
-        #handleWeaponAction(actor, actionId) {
-            const weapon = actor.items.get(actionId)
+        #handleWeaponAction(actor, itemId) {
+            const weapon = actor.items.get(itemId)
             weapon.beginWeaponAttackFlow();
         }
     }
