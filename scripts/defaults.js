@@ -30,8 +30,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 id: 'tech',
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.tech'),
                 groups: [
-                    { ...groups.techs, nestId: 'tech_techs'},
-                    { ...groups.basicTech, nestId: 'tech_basic-tech'},
+                    { ...groups.quickTechs, nestId: 'tech_quick-techs' },
+                    { ...groups.fullTechs, nestId: 'tech_full-techs' },
+                    { ...groups.invades, nestId: 'tech_invades' },
+                    { ...groups.basicTech, nestId: 'tech_basic-tech' },
                 ],
             },
             {
@@ -46,6 +48,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     { ...groups.freeActions, nestId: 'activations_free-actions' },
                     { ...groups.reactions, nestId: 'activations_reactions' },
                     { ...groups.traits, nestId: 'activations_traits' },
+                    { ...groups.otherActions, nestId: 'activations_other-actions' },
                 ],
 
             },
@@ -56,15 +59,17 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 groups: [
                     { ...groups.stats, nestId: 'skills_stats' },
                     { ...groups.skillTriggers, nestId: 'skills_skill-triggers' },
+                    { ...groups.bonds, nestId: 'skills_bonds' },
                 ]
             },
             {
-                nestId: 'macros',
-                id: 'macros',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.macros'),
+                nestId: 'utility',
+                id: 'utility',
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.utility'),
                 groups: [
-                    { ...groups.combat, nestId: 'macros_combat' },
-                    { ...groups.repair, nestId: 'macros_repair' }
+                    { ...groups.combat, nestId: 'utility_combat' },
+                    { ...groups.repair, nestId: 'utility_repair' },
+                    { ...groups.refresh, nestId: 'utility_refresh' },
                 ]
             },
             {

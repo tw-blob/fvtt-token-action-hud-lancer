@@ -83,6 +83,9 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 case 'bond':
                     this.#handleBondAction(actor, actionId)
                     break
+                case 'combat':
+                    this.#handleCombatAction(token, actionId)
+                    break
                 case 'core':
                     this.#handleCoreAction(actor, actionId)
                     break
@@ -157,9 +160,31 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         #handleBondAction (actor, actionId) {
             const bondParts = actionId.split(ID_DELIMITER)
             const itemId = bondParts[0]
-            const dataPath = bondParts[1]
+            const powerIndex = bondParts[1]
             const item = actor.items.get(itemId)
-            item.beginBondPowerFlow(dataPath)
+            item.beginBondPowerFlow(powerIndex)
+        }
+        
+        /**
+         * Handle combat action
+         * @private
+         * @param {object} token    The token
+         * @param {string} actionId The action id
+         */
+        async #handleCombatAction (token, actionId) {
+            if (!game.combat) return
+
+            const combatant = game.combat?.combatants.find(c => c.token === token)
+            if (!combatant) return
+
+            switch (actionId) {
+                case 'activate':
+                    await game.combat?.activateCombatant(combatant.id)
+                    break
+                case 'deactivate':
+                    await game.combat?.deactivateCombatant(combatant.id)
+                    break
+            }
         }
 
         /**
@@ -186,27 +211,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         #handleItemAction (event, actor, actionId) {
             const item = actor.items.get(actionId)
             item.toChat(event)
-        }
-
-        /**
-         * Handle utility action
-         * @private
-         * @param {object} token    The token
-         * @param {string} actionId The action id
-         */
-        async #handleUtilityAction (token, actionId) {
-            switch (actionId) {
-            case 'startTurn':
-                if (game.combat?.current?.tokenId === token.id) {
-                    await game.combat?.startTurn()
-                }
-                break
-            case 'endTurn':
-                if (game.combat?.current?.tokenId === token.id) {
-                    await game.combat?.nextTurn()
-                }
-                break
-            }
         }
 
         /**
