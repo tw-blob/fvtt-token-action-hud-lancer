@@ -26,14 +26,14 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 ],
             },
             {
-                nestId: 'tech',
-                id: 'tech',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.tech'),
+                nestId: 'techs',
+                id: 'techs',
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.techs'),
                 groups: [
-                    { ...groups.quickTechs, nestId: 'tech_quick-techs' },
-                    { ...groups.fullTechs, nestId: 'tech_full-techs' },
-                    { ...groups.invades, nestId: 'tech_invades' },
-                    { ...groups.basicTech, nestId: 'tech_basic-tech' },
+                    { ...groups.quickTechs, nestId: 'techs_quick-techs' },
+                    { ...groups.fullTechs, nestId: 'techs_full-techs' },
+                    { ...groups.invades, nestId: 'techs_invades' },
+                    { ...groups.basicTech, nestId: 'techs_basic-tech' },
                 ],
             },
             {

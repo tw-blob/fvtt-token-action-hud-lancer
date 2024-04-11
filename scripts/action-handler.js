@@ -1,5 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ACTIVATION_TYPE, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, NPC_FEATURE_TYPE, STAT_TYPE, WEAPON_TYPE } from './constants.js'
+import { ACTION_TYPE, ACTIVATION_TYPE, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, NPC_FEATURE_TYPE, STAT_TYPE } from './constants.js'
 
 export let ActionHandler = null
 
@@ -52,9 +52,8 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             // Set items variable
             if (this.actor) {
                 let items = this.actor.items
-                if (this.actor.pilot) {
-                    this.pilot = this.actor.pilot
-                    items = new Map([...items, ...this.actor.pilot.items])
+                if (this.actor.system.pilot) {
+                    this.pilot = this.actor.system.pilot.value
                 }
                 items = coreModule.api.Utils.sortItemsByName(items)
                 this.items = items
@@ -127,7 +126,9 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             this.#buildStats()
             this.#buildStatuses()
             if (this.showUnequippedItems) {
-                this.#buildInventory()
+                this.#buildInventory(this.items)
+                const pilotItems = coreModule.api.Utils.sortItemsByName(this.pilot.items)
+                this.#buildInventory(pilotItems)
             } else {
                 this.#buildMechLoadout()
                 this.#buildPilotLoadout()
@@ -170,7 +171,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             if (this.pilot) return
 
             if (this.showUnequippedItems) {
-                this.#buildInventory()
+                this.#buildInventory(this.items)
             } else {
                 this.#buildPilotLoadout()
             }
@@ -206,7 +207,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     if (!activationsMap.has(activationType)) activationsMap.set(activationType, new Map())
                     const activationId = `system.actions.${index}`
                     const id = [key, activationId].join(ID_DELIMITER)
-                    activationsMap.get(activationType).set(id, actions[index])
+                    activationsMap.get(activationType).set(id, activations[index])
 
                 }
             }
@@ -337,19 +338,19 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
             // Iterate through loadout rather than items
             const systems = this.actor.system.loadout.systems
-            const systemsMap = new Map(systems.map(s => [s._id, s]))
+            const systemsMap = new Map(systems.map(s => [s.id, s.value]))
 
             const mounts = this.actor.system.loadout.weapon_mounts
 
             for (const mount of mounts) {
                 if (mount.slots.length === 0) continue
 
-                mount.slots.map(({weapon, mod}) => {
-                    if (weapon && this.#isUsableItem(weapon)) {
-                        weaponsMap.set(weapon._id, weapon)
+                mount.slots.map(s => {
+                    if (s.weapon && this.#isUsableItem(s.weapon.value)) {
+                        weaponsMap.set(s.weapon.id, s.weapon.value)
                     }
-                    if (mod && this.#isUsableItem(mod)) {
-                        weaponModsMap.set(mod._id, mod)
+                    if (s.mod && this.#isUsableItem(s.mod.value)) {
+                        weaponModsMap.set(s.mod.id, s.mod.value)
                     }
                 })
             }
@@ -414,20 +415,20 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         #buildPilotLoadout () {
             const pilot = this.pilot ?? this.actor
+            if (pilot.items.size === 0) return
 
-            const nonWeapons = new Map(
-                [...pilot.items]
-                .filter(([k, v]) => !v.is_weapon())
-            )
+            const loadoutMap = new Map()
+            const items = coreModule.api.Utils.sortItemsByName(pilot.items)
 
-            this.#buildInventory(nonWeapons)
+            for (const [key, value] of items) {
+                if (!value.system.equipped) continue
 
-            // Weapons are pretty much the only item that isn't always equipped
-            const weapons = pilot?.system?.loadout?.weapons
-            if (!weapons) return
+                loadoutMap.set(key, value)
+            }
 
-            this.#buildWeapons(weapons, ENTRY_TYPE.PILOT_WEAPON)
-            this.#buildActivations(weapons, ENTRY_TYPE.PILOT_WEAPON)
+            
+
+            this.#buildInventory(loadoutMap)
         }
 
         /**
@@ -450,6 +451,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 const hasStat = this.actors.every((actor) => actor.system[key] !== undefined)
                 if (!hasStat) return
 
+                const id = path
                 const name = coreModule.api.Utils.i18n(STAT_TYPE[key])
                 const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? ''
                 const listName = `${actionTypeName}${name}`
@@ -461,7 +463,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     listName,
                     encodedValue,
                 }
-            })
+            }).filter(action => action !== undefined)
 
             const groupData = { id: 'stats', type: 'system' }
             this.addActions(actions, groupData)
@@ -611,55 +613,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             })
             
             this.addActions(actions, groupData)
-        }
-
-        /**
-         * Build weapons
-         * @private
-         */
-        #buildWeapons1 () {
-            if (this.items.size === 0) return
-
-            const actionTypeId = 'weapon'
-            const weaponsMap = new Map()
-
-            for (const [itemId, itemData] of this.items) {
-                const type = itemData.type
-                
-                if (this.#isUsableItem(itemData)) {
-                    if (itemData.is_weapon()) {
-                        const typeMap = weaponsMap.get(type) ?? new Map()
-                        typeMap.set(itemId, itemData)
-                        weaponsMap.set(type, typeMap)
-                    }
-                }
-            }
-            
-            for (const [type, typeMap] of weaponsMap) {
-                const groupId = WEAPON_TYPE[type]?.groupId
-
-                if (!groupId) continue
-
-                const groupData = { id: groupId, type: 'system' }
-
-                // Get actions
-                const actions = [...typeMap].map(([weaponId, weaponData]) => {
-                    const id = weaponId
-                    const name = weaponData.name
-                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
-                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
-                    const encodedValue = [actionTypeId, id].join(this.delimiter)
-
-                    return {
-                        id,
-                        name,
-                        listName,
-                        encodedValue,
-                    }
-                })
-                
-                this.addActions(actions, groupData)
-            }
         }
 
         /**

@@ -134,7 +134,7 @@ export const NPC_FEATURE_TYPE = {
 }
 
 export const STAT_TYPE = {
-    hull: 'tokenActionHud.lancer.hull',
+    hull: 'tokenActionHud.lancer.hul',
     agi: 'tokenActionHud.lancer.agi',
     sys: 'tokenActionHud.lancer.sys',
     eng: 'tokenActionHud.lancer.eng',
