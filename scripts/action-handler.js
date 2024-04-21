@@ -1,5 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ENTRY_TYPE, WEAPON_TYPE } from './constants.js'
+import { ACTION_TYPE, ACTIVATION_TYPE, DEFAULT_ACTION_NAME, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, MACRO_TYPE, NPC_FEATURE_TYPE, STAT_TYPE } from './constants.js'
 
 export let ActionHandler = null
 
@@ -12,6 +12,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         actors = null
         tokens = null
         actorType = null
+        pilot = null
 
         // Initialize items variable
         items = null
@@ -24,17 +25,18 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         showUnchargedNpcFeatures = null
         showUnequippedItems = null
         showUnloadedWeapons = null
-        showUsedCorePower = null
+        showInactiveCorePower = null
 
         // Initialize groupIds variables
+        groupIds = null
         activationgroupIds = null
         systemGroupIds = null
+        statGroupIds = null
         npcFeatureIds = null
+        nonActivations = null
 
         // Initialize action variables
         featureActions = null
-        inventoryActions = null
-        spellActions = null
 
         /**
          * Build System Actions
@@ -51,6 +53,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             // Set items variable
             if (this.actor) {
                 let items = this.actor.items
+                this.pilot = this.actor.system.pilot ? this.actor.system.pilot.value : null
                 items = coreModule.api.Utils.sortItemsByName(items)
                 this.items = items
             }
@@ -63,7 +66,9 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             //this.showUnequippedItems = Utils.getSetting('showUnequippedItems')
             //this.showUnchargedNpcFeatures = Utils.getSetting('showUnchargedNpcFeatures')
             //this.showUnloadedWeapons = Utils.getSetting('showUnloadedWeapons')
-            //this.showUsedCorePower = Utils.getSetting('showUsedCorePower')
+            //this.showInactiveCorePower = Utils.getSetting('showInactiveCorePower')
+
+            this.groupIds = groupIds
 
             this.activationgroupIds = [
                 'quick-actions',
@@ -88,18 +93,22 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 'traits',
             ]
 
+            this.nonActivations = [
+                'None',
+                'Passive',
+                'Other',
+            ]
+
             switch (this.actorType) {
                 case ENTRY_TYPE.MECH:
                     this.#buildMechActions()
+                    this.#buildPilotActions()
                     break
                 case ENTRY_TYPE.PILOT:
                     this.#buildPilotActions()
                     break
                 case ENTRY_TYPE.NPC:
                     this.#buildNpcActions()
-                    break
-                case ENTRY_TYPE.DEPLOYABLE:
-                    this.#buildDeployableActions()
                     break
                 default:
                     break
@@ -111,20 +120,23 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
-         * Build deployable actions TODO
-         * @private
-         */
-        #buildDeployableActions () {
-        }
-
-        /**
          * Build mech actions
          * @private
          */
         #buildMechActions () {
-            //this.#buildHase()
-            //this.#buildStatuses()
-            this.#buildWeapons()
+            this.#buildBasics()
+            this.#buildCombat()
+            this.#buildMacros()
+            this.#buildStats()
+            this.#buildStatuses()
+            if (this.showUnequippedItems) {
+                this.#buildInventory()
+                const pilotItems = coreModule.api.Utils.sortItemsByName(this.pilot.items)
+                this.#buildInventory(pilotItems)
+            } else {
+                this.#buildMechLoadout()
+                this.#buildPilotLoadout()
+            }
         }
 
         /**
@@ -133,6 +145,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @returns {object}
          */
         #buildMultipleTokenActions () {
+            this.#buildBasics()
+            this.#buildCombat()
+            this.#buildStats()
+            this.#buildStatuses()
         }
 
         /**
@@ -140,10 +156,12 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @private
          */
         #buildNpcActions() {
-            //this.#buildHase()
-            //this.#buildNpcFeatures()
-            //this.#buildStatuses()
-            this.#buildWeapons()
+            this.#buildBasics()
+            this.#buildCombat()
+            this.#buildMacros()
+            this.#buildNpcFeatures()
+            this.#buildStats()
+            this.#buildStatuses()
         }
 
         /**
@@ -151,10 +169,562 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @private
          */
         #buildPilotActions () {
-            //this.#buildHase()
-            //this.#buildPilotInventory()
-            //this.#buildPilotStats()
-            //this.#buildStatuses()
+            // Build pilot-specific actions
+
+            // Following actions already built by #buildMechActions if true
+            if (this.pilot) return
+
+            if (this.showUnequippedItems) {
+                this.#buildInventory()
+            } else {
+                this.#buildPilotLoadout()
+            }
+            
+            this.#buildBasics()
+            this.#buildCombat()
+            this.#buildStats()
+            this.#buildStatuses()
+        }
+
+        /**
+         * Build sub activations
+         * @private
+         * @param {object} actions The actions
+         * @param {string} itemId The item id
+         * @param {string} [itemType=''] The list type of item
+         * @param {string} [dataPath='system.actions'] The path for the activation flow
+         */
+        #buildSubActions (actions, itemId, itemType = '', dataPath = 'system.actions') {
+            if (actions.length === 0) return
+
+            const activationsMap = new Map()
+
+            for (const index of actions.keys()) {
+                const activationType = actions[index].activation
+                if (!this.showItemsWithoutActivations && this.nonActivations.includes(activationType)) continue
+
+                if (!activationsMap.has(activationType)) activationsMap.set(activationType, new Map())
+
+                const activationId = `${dataPath}.${index}`
+                const id = [itemId, activationId].join(ID_DELIMITER)
+                const name = actions[index].name === DEFAULT_ACTION_NAME ? this.items.get(itemId).name : actions[index].name
+                const activation = {...actions[index], name}
+                activationsMap.get(activationType).set(id, activation)
+            }
+
+            for (const [type, typeMap] of activationsMap) {
+                const groupId = ACTIVATION_TYPE[type]?.groupId
+                const actionTypeId = ITEM_TYPE[itemType]?.actionType ?? ACTIVATION_TYPE[type]?.actionType
+
+                if (!groupId || !actionTypeId) continue
+
+                const groupData = { id: groupId, type: 'system' }
+
+                // Get actions
+                const actions = [...typeMap].map(([id, data]) => {
+                    const name = data.name
+                    const actionType = 'activation'
+                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                    const encodedValue = [actionType, id].join(this.delimiter)
+
+                    return {
+                        id,
+                        name,
+                        listName,
+                        encodedValue,
+                    }
+                }).sort(this.#sortActionsByName)
+                
+                this.addActions(actions, groupData)
+            }
+        }
+
+        /**
+         * Build item activations
+         * @private
+         * @param {object} items the items
+         * @param {string} [itemType=''] The list type of item
+         */
+        #buildItemActions (items, itemType = '') {
+            if (items.size === 0) return
+
+            const activationsMap = new Map()
+
+            for (const [key, value] of items) {
+                const activations = value.system.actions
+                for (const index of activations.keys()) {
+                    const activationType = activations[index].activation
+                    if (!this.showItemsWithoutActivations && this.nonActivations.includes(activationType)) continue
+
+                    if (!activationsMap.has(activationType)) activationsMap.set(activationType, new Map())
+
+                    const activationId = `system.actions.${index}`
+                    const id = [key, activationId].join(ID_DELIMITER)
+                    const name = activations[index].name === DEFAULT_ACTION_NAME ? value.name : activations[index].name
+                    const activation = {...activations[index], name}
+                    activationsMap.get(activationType).set(id, activation)
+                }
+            }
+
+            for (const [type, typeMap] of activationsMap) {
+                const groupId = ACTIVATION_TYPE[type]?.groupId
+                const actionTypeId = ITEM_TYPE[itemType]?.actionType ?? ACTIVATION_TYPE[type]?.actionType
+
+                if (!groupId || !actionTypeId) continue
+
+                const groupData = { id: groupId, type: 'system' }
+
+                // Get actions
+                const actions = [...typeMap].map(([id, data]) => {
+                    const name = data.name
+                    const actionType = 'activation'
+                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                    const encodedValue = [actionType, id].join(this.delimiter)
+
+                    return {
+                        id,
+                        name,
+                        listName,
+                        encodedValue,
+                    }
+                }).sort(this.#sortActionsByName)
+                
+                this.addActions(actions, groupData)
+            }
+        }
+
+        /**
+         * Build basic actions
+         * @private
+         */
+        #buildBasics () {
+            if (this.tokens?.length === 0) return
+
+            const actionType = 'basic'
+
+            const basics = [
+                { key: 'basic-attack', type: 'weapon' },
+                { key: 'basic-tech', type: 'tech' },
+            ]
+
+            basics.map(b => {
+                const id = b.key
+                const name = coreModule.api.Utils.i18n(ACTION_TYPE[b.key])
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[b.type])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = [b.key, actionType].join(this.delimiter)
+
+                const actions = [{
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }]
+                const groupData = { id, type: 'system' }
+                this.addActions(actions, groupData)
+            })
+        }
+
+        /**
+         * Build bonds
+         * @private
+         * @param {object} bonds the map of bonds
+         */
+        #buildBonds (bonds) {
+            if (bonds.size === 0) return
+
+            const actionTypeId = ITEM_TYPE[ENTRY_TYPE.BOND]?.actionType
+            const groupId = ITEM_TYPE[ENTRY_TYPE.BOND]?.groupId
+
+            if (!groupId || !actionTypeId) return
+
+            const groupData = { id: groupId, type: 'system' }
+
+            // Get actions
+            let actions = []
+            for (const [bondId, bondData] of bonds) {
+                const powers = bondData.system.powers
+                for (const index of powers.keys()) {
+                    const power = powers[index]
+                    if (!power.unlocked) continue
+                    if (!this.showItemsWithoutUses && power.uses && power.uses.value === 0) continue
+
+                    const id = [bondId, index].join(ID_DELIMITER)
+                    const name =  power.name
+                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                    const encodedValue = [actionTypeId, id].join(this.delimiter)
+
+                    actions.push({
+                        id,
+                        name,
+                        listName,
+                        encodedValue,
+                    })
+                }
+
+                const id = bondId
+                const name = `Refresh ${bondData.name}`
+                const listName = `Refresh: ${bondData.name}`
+                const encodedValue = ['refresh-powers', bondId].join(this.delimiter)
+
+                actions.push({
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                })
+            }
+
+            actions.sort(this.#sortActionsByName)
+            
+            this.addActions(actions, groupData)
+        }
+
+        /**
+         * Build combat
+         * @private
+         */
+        #buildCombat () {
+            if (this.tokens?.length === 0) return
+
+            const groupId = 'combat'
+
+            const combat = [
+                'activate',
+                'deactivate',
+            ]
+
+            combat.map(c => {
+                const id = c
+                const name = coreModule.api.Utils.i18n(ACTION_TYPE[c])
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[groupId])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = [groupId, id].join(this.delimiter)
+
+                const actions = [{
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }]
+                const groupData = { id: groupId, type: 'system' }
+                this.addActions(actions, groupData)
+            })
+        }
+
+        /**
+         * Build frame traits and core active
+         * @private
+         * @param {object} items The items
+         */
+        #buildFrame (items) {
+            if (items.size === 0) return
+
+            const actionTypeId = 'frame'
+
+            for (const [key, value] of items) {
+                const activeActions = value.system.core_system.active_actions
+                const passiveActions = value.system.core_system.passive_actions
+                const traits = value.system.traits                                          
+                this.#buildSubActions(activeActions, key, actionTypeId, 'system.core_system.active_actions')
+                this.#buildSubActions(passiveActions, key, actionTypeId, 'system.core_system.passive_actions')
+                this.#buildSubActions(traits, key, '', 'system.traits')
+            
+                const id = [key, 'system.core_system'].join(ID_DELIMITER)
+                const name = value.system.core_system.active_name
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[ENTRY_TYPE.FRAME])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = ['core', id].join(this.delimiter)
+
+                const actions = [{
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }]
+                const groupData = { id: 'core-power', type: 'system' }
+                this.addActions(actions, groupData)
+                
+            }
+        }
+
+        /**
+         * Build inventory
+         * @private
+         * @param {null} [items=null] The items
+         */
+        #buildInventory (items = null) {
+            const inventory = items ?? this.items
+            if (inventory.size === 0) return
+
+            const inventoryMap = new Map()
+
+            for (const [itemId, itemData] of inventory) {
+                const type = itemData.system.type ?? itemData.type
+
+                if (this.#isUsableItem(itemData)) {
+                    const typeMap = inventoryMap.get(type) ?? new Map()
+                    typeMap.set(itemId, itemData)
+                    inventoryMap.set(type, typeMap)
+                }
+            }
+            
+            for (const [type, typeMap] of inventoryMap) {
+                // Systems are pretty much only activations
+                switch (type) {
+                    case ENTRY_TYPE.BOND:
+                        this.#buildBonds(typeMap)
+                        break
+                    case ENTRY_TYPE.FRAME:
+                        this.#buildFrame(typeMap)
+                        break
+                    case ENTRY_TYPE.MECH_WEAPON:
+                    case ENTRY_TYPE.PILOT_WEAPON:
+                    case ENTRY_TYPE.WEAPON_MOD:
+                        this.#buildWeapons(typeMap, type)
+                    case ENTRY_TYPE.MECH_SYSTEM:
+                        this.#buildItemActions(typeMap, type)
+                        break
+                    case ENTRY_TYPE.SKILL:
+                        this.#buildSkills(typeMap)
+                        break
+                    case ENTRY_TYPE.TALENT:
+                        this.#buildTalents(typeMap)
+                        break
+                    default:
+                        break
+                }
+            }
+
+        }
+
+        /**
+         * Build macros
+         * @private
+         */
+        #buildMacros () {
+            if (this.actors?.length === 0) return
+
+            const actionType = 'macro'
+            const groupId = 'macros'
+
+            const macros = [
+                'stabilize',
+                'full-repair',
+                'structure',
+                'overheat',
+            ]
+
+            if (this.actors.every(a => a.type === ENTRY_TYPE.MECH)) {
+                macros.push('overcharge')
+            }
+
+            if (this.actors.every(a => a.type === ENTRY_TYPE.NPC)) {
+                macros.push('recharge')
+            }
+
+            macros.map(m => {
+                const id = m
+                const name = coreModule.api.Utils.i18n(MACRO_TYPE[m])
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionType])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = [m, 'none'].join(this.delimiter)
+
+                const actions = [{
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }]
+                const groupData = { id: groupId, type: 'system' }
+                this.addActions(actions, groupData)
+            })
+        }
+
+        /**
+         * Build mech loadout
+         * @private
+         */
+        #buildMechLoadout () {
+            const loadout = this.actor?.system?.loadout
+            if (!loadout) return
+            
+            const weaponsMap = new Map()
+            const weaponModsMap = new Map()
+
+            // Iterate through loadout rather than items
+            const systems = loadout.systems
+            const systemsMap = new Map(systems.map(s => [s.id, s.value]))
+            const frame = loadout.frame
+            const frameMap = new Map([[frame.id, frame.value]])
+
+            const mounts = loadout.weapon_mounts
+
+            for (const mount of mounts) {
+                if (mount.slots.length === 0) continue
+
+                mount.slots.map(s => {
+                    if (s.weapon && this.#isUsableItem(s.weapon.value)) {
+                        weaponsMap.set(s.weapon.id, s.weapon.value)
+                    }
+                    if (s.mod && this.#isUsableItem(s.mod.value)) {
+                        weaponModsMap.set(s.mod.id, s.mod.value)
+                    }
+                })
+            }
+
+            // Systems are pretty much only activations
+            this.#buildWeapons(weaponsMap, ENTRY_TYPE.MECH_WEAPON)
+            this.#buildItemActions(weaponsMap, ENTRY_TYPE.MECH_WEAPON)
+            this.#buildWeapons(weaponModsMap, ENTRY_TYPE.WEAPON_MOD)
+            this.#buildItemActions(weaponModsMap, ENTRY_TYPE.WEAPON_MOD)
+            this.#buildItemActions(systemsMap, ENTRY_TYPE.MECH_SYSTEM)
+            this.#buildFrame(frameMap)
+        }
+
+        /**
+         * Build npc features
+         * @private
+         */
+        #buildNpcFeatures () {
+            if (this.items.size === 0) return
+
+            const featuresMap = new Map()
+
+            for (const [itemId, itemData] of this.items) {
+                const type = itemData.system.type
+                
+                if (this.#isUsableItem(itemData)) {
+                    const typeMap = featuresMap.get(type) ?? new Map()
+                    typeMap.set(itemId, itemData)
+                    featuresMap.set(type, typeMap)
+                }
+            }
+            
+            for (const [type, typeMap] of featuresMap) {
+                const groupId = NPC_FEATURE_TYPE[type]?.groupId
+
+                if (!groupId) continue
+
+                const groupData = { id: groupId, type: 'system' }
+
+                // Get actions
+                const actions = [...typeMap].map(([id, data]) => {
+                    const name = data.name
+                    const actionType = NPC_FEATURE_TYPE[type]?.actionType
+                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionType])
+                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                    const encodedValue = [actionType, id].join(this.delimiter)
+
+                    return {
+                        id,
+                        name,
+                        listName,
+                        encodedValue,
+                    }
+                })
+                
+                this.addActions(actions, groupData)
+            }
+        }
+
+        /**
+         * Build pilot loadout
+         * @private
+         */
+        #buildPilotLoadout () {
+            const pilot = this.pilot ?? this.actor
+            if (pilot.items.size === 0) return
+
+            const loadoutMap = new Map()
+            const items = coreModule.api.Utils.sortItemsByName(pilot.items)
+
+            for (const [key, value] of items) {
+                if (!value.system.equipped) continue
+
+                loadoutMap.set(key, value)
+            }
+
+            
+
+            this.#buildInventory(loadoutMap)
+        }
+
+        /**
+         * Build skills
+         * @private
+         * @param {object} items The items
+         */
+        #buildSkills (items) {
+            if (items.size === 0) return
+
+            const actionTypeId = ITEM_TYPE[ENTRY_TYPE.SKILL]?.actionType
+            const groupId = ITEM_TYPE[ENTRY_TYPE.SKILL]?.groupId
+
+            if (!groupId || !actionTypeId) return
+
+            const groupData = { id: groupId, type: 'system' }
+            const skills = coreModule.api.Utils.sortItemsByName(items)
+
+            // Get actions
+            const actions = [...skills].map(([skillId, skillData]) => {
+                const id = skillId
+                const name = skillData.name
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = [actionTypeId, id].join(this.delimiter)
+
+                return {
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }
+            })
+            
+            this.addActions(actions, groupData)
+        }
+
+        /**
+         * Build stats
+         * @private
+         */
+        #buildStats () {
+            const actionType = ITEM_TYPE['stat']?.actionType
+            const groupId = ITEM_TYPE['stat']?.groupId
+
+            const stats = {
+                hull: 'system.hull',
+                agi: 'system.agi',
+                sys: 'system.sys',
+                eng: 'system.eng',
+                grit: 'system.grit',
+                tier: 'system.tier',
+            }
+
+            const actions = Object.entries(stats).map(([key, path]) => {
+                const hasStat = this.actors.every((actor) => actor.system[key] !== undefined)
+                if (!hasStat) return
+
+                const id = path
+                const name = coreModule.api.Utils.i18n(STAT_TYPE[key])
+                const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? ''
+                const listName = `${actionTypeName}${name}`
+                const encodedValue = [actionType, path].join(this.delimiter)
+
+                return {
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }
+            }).filter(action => action !== undefined)
+
+            const groupData = { id: groupId, type: 'system' }
+            this.addActions(actions, groupData)
         }
 
         /**
@@ -209,38 +779,48 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
-         * Build weapons
+         * Build talents
          * @private
+         * @param {object} items Map of talents
          */
-        #buildWeapons () {
-            if (this.items.size === 0) return
+        #buildTalents (items) {
+            if (items.size === 0) return
 
-            const actionTypeId = 'weapon'
-            const weaponsMap = new Map()
+            const actionTypeId = ITEM_TYPE[ENTRY_TYPE.TALENT]?.actionType
+            const activationsMap = new Map()
 
-            for (const [itemId, itemData] of this.items) {
-                const type = itemData.type
-                
-                if (this.#isUsableItem(itemData)) {
-                    if (itemData.is_weapon()) {
-                        const typeMap = weaponsMap.get(type) ?? new Map()
-                        typeMap.set(itemId, itemData)
-                        weaponsMap.set(type, typeMap)
-                    }
+            const nonActivations = [
+                'None',
+                'Passive',
+                'Other',
+            ]
+
+            for (const [key, value] of items) {
+                const curr_rank = value.system.curr_rank
+                for (let rank = 0; rank < curr_rank; rank++) {
+                    const talent = value.system.ranks[rank]
+                    talent.actions.map((action, index) => {
+                        const activationType = action.activation
+                        if (!this.showItemsWithoutActivations && nonActivations.includes(activationType)) return
+
+                        if (!activationsMap.has(activationType)) activationsMap.set(activationType, new Map())
+                        const activationId = `system.ranks.${rank}.actions.${index}`
+                        const id = [key, activationId].join(ID_DELIMITER)
+                        activationsMap.get(activationType).set(id, action)
+                    })
                 }
             }
-            
-            for (const [type, typeMap] of weaponsMap) {
-                const groupId = WEAPON_TYPE[type]?.groupId
+
+            for (const [type, typeMap] of activationsMap) {
+                const groupId = ACTIVATION_TYPE[type]?.groupId
 
                 if (!groupId) continue
 
                 const groupData = { id: groupId, type: 'system' }
 
                 // Get actions
-                const actions = [...typeMap].map(([weaponId, weaponData]) => {
-                    const id = weaponId
-                    const name = weaponData.name
+                const actions = [...typeMap].map(([id, data]) => {
+                    const name = data.name
                     const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
                     const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
                     const encodedValue = [actionTypeId, id].join(this.delimiter)
@@ -251,10 +831,46 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                         listName,
                         encodedValue,
                     }
-                })
+                }).sort(this.#sortActionsByName)
                 
                 this.addActions(actions, groupData)
             }
+        }
+
+        /**
+         * Build weapons
+         * @private
+         * @param {object} items Map of weapons
+         * @param {string} type Type of weapon
+         */
+        #buildWeapons (items, type) {
+            if (items.size === 0) return
+
+            const actionTypeId = ITEM_TYPE[type]?.actionType
+            const groupId = ITEM_TYPE[type]?.groupId
+
+            if (!groupId || !actionTypeId) return
+
+            const groupData = { id: groupId, type: 'system' }
+            const weapons = coreModule.api.Utils.sortItemsByName(items)
+
+            // Get actions
+            const actions = [...weapons].map(([weaponId, weaponData]) => {
+                const id = weaponId
+                const name = weaponData.name
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = [actionTypeId, id].join(this.delimiter)
+
+                return {
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }
+            })
+            
+            this.addActions(actions, groupData)
         }
 
         /**
@@ -290,7 +906,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
-         * Is usable item
+         * Is usable item (weapons, systems, or npc features)
          * @private
          * @param {object} item The item
          * @returns {boolean}
@@ -301,14 +917,34 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     if (!this.showUnchargedNpcFeatures && item.isRecharge() && !item.system.charged) return false
                 case ENTRY_TYPE.MECH_SYSTEM:
                 case ENTRY_TYPE.MECH_WEAPON:
+                case ENTRY_TYPE.WEAPON_MOD:
+                    if (!this.showDestroyedItems && item.system.destroyed) return false
+                case ENTRY_TYPE.PILOT_WEAPON:
                     if (!this.showUnloadedWeapons && item.isLoading() && !item.system.loaded) return false
                     if (!this.showItemsWithoutUses && item.isLimited() && !item.system.uses.value) return false
-                    if (!this.showDestroyedItems || item.system.destroyed) return false
+                    break
+                case ENTRY_TYPE.BOND:
+                case ENTRY_TYPE.TALENT:
+                case ENTRY_TYPE.SKILL:
+                    break
                 default:
-                    if (!this.showUnequippedItems && !item.system.equipped) return false
+                    return false
             }
-            
+
             return true
+        }
+
+        /**
+         * Sort by name callback for actions array
+         * @private
+         * @param {object} a 
+         * @param {object} b
+         * @returns {number}
+         */
+        #sortActionsByName(a, b) {
+            if (a.name === b.name) return 0
+
+            return a.name < b.name ? -1 : 1
         }
     }
 })

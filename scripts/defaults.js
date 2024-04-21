@@ -15,49 +15,51 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
     DEFAULTS = {
         layout: [
             {
-                nestId: 'pilot',
-                id: 'pilot',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.pilot'),
+                nestId: 'attacks',
+                id: 'attacks',
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.attacks'),
                 groups: [
-                    { ...groups.skillTriggers, nestId: 'pilot_skill-triggers' },
-                    { ...groups.grit, nestId: 'pilot_grit' },
-                    { ...groups.talents, nestId: 'pilot_talents' },
-                    { ...groups.pilotGear, nestId: 'pilot_pilot-gear' },
-                    { ...groups.pilotWeapons, nestId: 'pilot_pilot-weapons' },
-                    { ...groups.bonds, nestId: 'pilot_bonds' },
-                ]
+                    { ...groups.mechWeapons, nestId: 'attacks_mech-weapons' },
+                    { ...groups.weaponMods, nestId: 'attacks_weapon-mods' },
+                    { ...groups.pilotWeapons, nestId: 'attacks_pilot-weapons' },
+                    { ...groups.basicAttack, nestId: 'attacks_basic-attack' },
+                ],
             },
             {
-                nestId: 'mech',
-                id: 'mech',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.mech'),
+                nestId: 'techs',
+                id: 'techs',
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.techs'),
                 groups: [
-                    { ...groups.hase, nestId: 'mech_hase' },
-                    { ...groups.coreBonuses, nestId: 'mech_core-bonuses' },
-                    { ...groups.corePower, nestId: 'mech_core-power' },
-                    { ...groups.traits, nestId: 'mech_traits' },
-                ]
+                    { ...groups.quickTechs, nestId: 'techs_quick-techs' },
+                    { ...groups.fullTechs, nestId: 'techs_full-techs' },
+                    { ...groups.invades, nestId: 'techs_invades' },
+                    { ...groups.basicTech, nestId: 'techs_basic-tech' },
+                ],
             },
             {
-                nestId: 'weapon',
-                id: 'weapon',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.weapon'),
+                nestId: 'activations',
+                id: 'activations',
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.activations'),
                 groups: [
-                    { ...groups.integratedMounts, nestId: 'weapon_integrated-mounts' },
-                    { ...groups.mount1, nestId: 'weapon_mount-1' },
-                    { ...groups.mount2, nestId: 'weapon_mount-2' },
-                    { ...groups.mount3, nestId: 'weapon_mount-3' },
-                    { ...groups.attacks, nestId: 'weapon_attacks' },
-                ]
+                    { ...groups.corePower, nestId: 'activations_core-power' },
+                    { ...groups.protocols, nestId: 'activations_protocols' },
+                    { ...groups.quickActions, nestId: 'activations_quick-actions' },
+                    { ...groups.fullActions, nestId: 'activations_full-actions' },
+                    { ...groups.freeActions, nestId: 'activations_free-actions' },
+                    { ...groups.reactions, nestId: 'activations_reactions' },
+                    { ...groups.traits, nestId: 'activations_traits' },
+                    { ...groups.other, nestId: 'activations_other' },
+                ],
+
             },
             {
-                nestId: 'system',
-                id: 'system',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.system'),
+                nestId: 'skills',
+                id: 'skills',
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.skills'),
                 groups: [
-                    { ...groups.techs, nestId: 'system_techs' },
-                    { ...groups.systems, nestId: 'system_systems' },
-                    { ...groups.deployables, nestId: 'system_deployables' },
+                    { ...groups.stats, nestId: 'skills_stats' },
+                    { ...groups.skills, nestId: 'skills_skills' },
+                    { ...groups.bonds, nestId: 'skills_bonds' },
                 ]
             },
             {
@@ -66,15 +68,15 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.utility'),
                 groups: [
                     { ...groups.combat, nestId: 'utility_combat' },
-                    { ...groups.repair, nestId: 'utility_repair' }
+                    { ...groups.macros, nestId: 'utility_macros' },
                 ]
             },
             {
-                nestId: 'status',
-                id: 'status',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.status'),
+                nestId: 'statuses',
+                id: 'statuses',
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.statuses'),
                 groups: [
-                    { ...groups.statuses, nestId: 'status_statuses' }
+                    { ...groups.statuses, nestId: 'statuses_statuses' }
                 ]
             }
         ],
