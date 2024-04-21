@@ -22,7 +22,11 @@ export const REQUIRED_CORE_MODULE_VERSION = '1.5'
  */
 export const ACTION_TYPE = {
     activation: 'tokenActionHud.lancer.activation',
+    'basic-attack': 'tokenActionHud.lancer.basicAttack',
+    'basic-tech': 'tokenActionHud.lancer.basicTech',
     bond: 'tokenActionHud.lancer.bond',
+    core: 'tokenActionHud.lancer.core',
+    frame: 'tokenActionHud.lancer.frame',
     'free-action': 'tokenActionHud.lancer.freeAction',
     'full-action': 'tokenActionHud.lancer.fullAction',
     'full-tech': 'tokenActionHud.lancer.fullTech',
@@ -51,6 +55,8 @@ export const ACTIVATION_TYPE = {
     "Protocol": { groupId: 'protocols', actionType: 'protocol' },
     "Free": { groupId: 'free-actions', actionType: 'free-action' },
 }
+
+export const DEFAULT_ACTION_NAME = "New Action"
 
 /**
  * Groups
@@ -119,6 +125,7 @@ export const ID_DELIMITER = '>'
 
 export const ITEM_TYPE = {
     bond: { groupId: 'bonds', actionType: 'bond' },
+    frame: { groupId: 'traits', actionType: 'activation' },
     mech_system: { groupId: 'mech-systems', actionType: 'system' },
     mech_weapon: { groupId: 'mech-weapons', actionType: 'weapon' },
     pilot_weapon: { groupId: 'pilot-weapons', actionType: 'weapon' },

@@ -86,6 +86,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 case 'combat':
                     this.#handleCombatAction(token, actionId)
                     break
+                case 'frame':
                 case 'core':
                     this.#handleCoreAction(actor, actionId)
                     break
@@ -195,9 +196,9 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         #handleCoreAction (actor, actionId) {
             const coreParts = actionId.split(ID_DELIMITER)
-            const itemId = coreParts[0]
+            const frameId = coreParts[0]
             const dataPath = coreParts[1]
-            const item = actor.items.get(itemId)
+            const item = actor.items.get(frameId)
             item.beginCoreActiveFlow(dataPath)
         }
 
