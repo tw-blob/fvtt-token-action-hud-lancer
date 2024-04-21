@@ -1,5 +1,6 @@
 // System Module Imports
 import { ACTION_TYPE, ACTIVATION_TYPE, DEFAULT_ACTION_NAME, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, MACRO_TYPE, NPC_FEATURE_TYPE, STAT_TYPE } from './constants.js'
+import { Utils } from './utils.js'
 
 export let ActionHandler = null
 
@@ -21,18 +22,12 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         showDestroyedItems = null
         showItemsWithoutActivations = null
         showItemsWithoutUses = null
-        showNpcFeaturesWithoutActivations = null
         showUnchargedNpcFeatures = null
         showUnequippedItems = null
         showUnloadedWeapons = null
-        showInactiveCorePower = null
 
         // Initialize groupIds variables
         groupIds = null
-        activationgroupIds = null
-        systemGroupIds = null
-        statGroupIds = null
-        npcFeatureIds = null
         nonActivations = null
 
         // Initialize action variables
@@ -58,40 +53,15 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 this.items = items
             }
 
-            // Set settings variables TODO
-            //this.showDestroyedItems = Utils.getSetting('showDestroyedItems')
-            //this.showItemsWithoutActivations = Utils.getSetting('showItemsWithoutActivations')
-            //this.showItemsWithoutUses = Utils.getSetting('showItemsWithoutUses')
-            //this.showNpcFeaturesWithoutActivations = Utils.getSetting('showNpcFeaturesWithoutActivations')
-            //this.showUnequippedItems = Utils.getSetting('showUnequippedItems')
-            //this.showUnchargedNpcFeatures = Utils.getSetting('showUnchargedNpcFeatures')
-            //this.showUnloadedWeapons = Utils.getSetting('showUnloadedWeapons')
-            //this.showInactiveCorePower = Utils.getSetting('showInactiveCorePower')
+            // Set settings variables
+            this.showDestroyedItems = Utils.getSetting('showDestroyedItems')
+            this.showItemsWithoutActivations = Utils.getSetting('showItemsWithoutActivations')
+            this.showItemsWithoutUses = Utils.getSetting('showItemsWithoutUses')
+            this.showUnequippedItems = Utils.getSetting('showUnequippedItems')
+            this.showUnchargedNpcFeatures = Utils.getSetting('showUnchargedNpcFeatures')
+            this.showUnloadedWeapons = Utils.getSetting('showUnloadedWeapons')
 
             this.groupIds = groupIds
-
-            this.activationgroupIds = [
-                'quick-actions',
-                'full-actions',
-                'reactions',
-                'protocols',
-                'free-actions',
-                'quick-tech',
-                'full-tech',
-            ]
-
-            this.systemGroupIds = [
-                'actions',
-                'deployables',
-                'techs'
-            ]
-
-            this.npcFeatureIds = [
-                'techs',
-                'systems',
-                'weapons',
-                'traits',
-            ]
 
             this.nonActivations = [
                 'None',
@@ -114,9 +84,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     break
             }
 
-            if (!this.actor) {
-                this.#buildMultipleTokenActions()
-            }
+            // TODO: Find a way to handle multiple token actions at once
+            //if (!this.actor) {
+            //    this.#buildMultipleTokenActions()
+            //}
         }
 
         /**
@@ -140,7 +111,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
-         * Build multiple token actions TODO
+         * Build multiple token actions
          * @private
          * @returns {object}
          */
@@ -152,7 +123,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
-         * Build npc actions TODO
+         * Build npc actions
          * @private
          */
         #buildNpcActions() {
@@ -789,19 +760,13 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const actionTypeId = ITEM_TYPE[ENTRY_TYPE.TALENT]?.actionType
             const activationsMap = new Map()
 
-            const nonActivations = [
-                'None',
-                'Passive',
-                'Other',
-            ]
-
             for (const [key, value] of items) {
                 const curr_rank = value.system.curr_rank
                 for (let rank = 0; rank < curr_rank; rank++) {
                     const talent = value.system.ranks[rank]
                     talent.actions.map((action, index) => {
                         const activationType = action.activation
-                        if (!this.showItemsWithoutActivations && nonActivations.includes(activationType)) return
+                        if (!this.showItemsWithoutActivations && this.nonActivations.includes(activationType)) return
 
                         if (!activationsMap.has(activationType)) activationsMap.set(activationType, new Map())
                         const activationId = `system.ranks.${rank}.actions.${index}`

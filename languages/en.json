@@ -75,7 +75,33 @@
         "utility": "Utility",
         "weapon": "Weapon",
         "weaponMods": "Weapon Mods",
-        "weapons": "Weapons"
+        "weapons": "Weapons",
+        "settings": {
+          "showDestroyedItems": {
+            "hint": "Show items that are marked as destroyed",
+            "name": "Show Destroyed Items"
+          },
+          "showItemsWithoutActivations": {
+            "hint": "Show items that have no active actions",
+            "name": "Show Items Without Activations"
+          },
+          "showItemsWithoutUses": {
+            "hint": "Show items with the 'Limited' tag with all uses expended",
+            "name": "Show Items Without Uses"
+          },
+          "showUnequippedItems": {
+            "hint": "Show items in inventory not currently equipped in loadout",
+            "name": "Show Unequipped Items"
+          },
+          "showUnchargedNpcFeatures": {
+            "hint": "Show NPC features that have not been recharged",
+            "name": "Show Uncharged NPC Features"
+          },
+          "showUnloadedWeapons": {
+            "hint": "Show weapons with the 'Loading' tag that have not been reloaded",
+            "name": "Show Unloaded Weapons"
+          }
+        }
       }
     }
   }

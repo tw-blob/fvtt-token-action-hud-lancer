@@ -34,11 +34,12 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const controlledTokens = canvas.tokens.controlled
                 .filter((token) => knownCharacters.includes(token.actor?.type))
 
+            // TODO: Find a way to handle multiple token actions at once
             // If multiple actors are selected
-            for (const token of controlledTokens) {
-                const actor = token.actor
-                await this.#handleAction(event, actor, token, actionTypeId, actionId)
-            }
+            //for (const token of controlledTokens) {
+            //    const actor = token.actor
+            //    await this.#handleAction(event, actor, token, actionTypeId, actionId)
+            //}
         }
 
         /**
