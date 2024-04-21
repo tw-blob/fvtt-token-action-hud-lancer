@@ -21,21 +21,26 @@ export const REQUIRED_CORE_MODULE_VERSION = '1.5'
  * Action types
  */
 export const ACTION_TYPE = {
+    activate: 'tokenActionHud.lancer.activate',
     activation: 'tokenActionHud.lancer.activation',
     'basic-attack': 'tokenActionHud.lancer.basicAttack',
     'basic-tech': 'tokenActionHud.lancer.basicTech',
     bond: 'tokenActionHud.lancer.bond',
     core: 'tokenActionHud.lancer.core',
+    deactivate: 'tokenActionHud.lancer.deactivate',
     frame: 'tokenActionHud.lancer.frame',
     'free-action': 'tokenActionHud.lancer.freeAction',
     'full-action': 'tokenActionHud.lancer.fullAction',
     'full-tech': 'tokenActionHud.lancer.fullTech',
     invade: 'tokenActionHud.lancer.invade',
     other: 'tokenActionHud.lancer.other',
+    'pilot-weapon': 'tokenActionHud.lancer.pilotWeapon',
     'quick-action': 'tokenActionHud.lancer.quickAction',
     'quick-tech': 'tokenActionHud.lancer.quickTech',
     protocol: 'tokenActionHud.lancer.protocol',
     reaction: 'tokenActionHud.lancer.reaction',
+    stat: 'tokenActionHud.lancer.stat',
+    status: 'tokenActionHud.lancer.status',
     system: 'tokenActionHud.lancer.system',
     talent: 'tokenActionHud.lancer.talent',
     tech: 'tokenActionHud.lancer.tech',
@@ -76,6 +81,7 @@ export const GROUP = {
     grit: { id: 'grit', name: 'tokenActionHud.lancer.grit', type: 'system' },
     hase: { id: 'hase', name: 'tokenActionHud.lancer.hase', type: 'system' },
     invades: { id: 'invades', name: 'tokenActionHud.lancer.invades', type: 'system' },
+    macros: { id: 'macros', name: 'tokenActionHud.lancer.macros', type: 'system' },
     mechWeapons: { id: 'mech-weapons', name: 'tokenActionHud.lancer.mechWeapons', type: 'system' },
     other: { id: 'other', name: 'tokenActionHud.lancer.other', type: 'system' },
     pilotGear: { id: 'pilot-gear', name: 'tokenActionHud.lancer.pilotGear', type: 'system' },
@@ -128,9 +134,20 @@ export const ITEM_TYPE = {
     frame: { groupId: 'traits', actionType: 'activation' },
     mech_system: { groupId: 'mech-systems', actionType: 'system' },
     mech_weapon: { groupId: 'mech-weapons', actionType: 'weapon' },
-    pilot_weapon: { groupId: 'pilot-weapons', actionType: 'weapon' },
+    pilot_weapon: { groupId: 'pilot-weapons', actionType: 'pilot-weapon' },
     skill: { groupId: 'skills', actionType: 'skill' },
+    stat: { groupId: 'stats', actionType: 'stat' },
+    talent: { groupId: 'talents', actionType: 'talent' },
     weapon_mod: { groupId: 'weapon-mods', actionType: 'system' },
+}
+
+export const MACRO_TYPE = {
+    'full-repair': 'tokenActionHud.lancer.fullRepair',
+    overcharge: 'tokenActionHud.lancer.overcharge',
+    overheat: 'tokenActionHud.lancer.overheat',
+    recharge: 'tokenActionHud.lancer.recharge',
+    stabilize: 'tokenActionHud.lancer.stabilize',
+    structure: 'tokenActionHud.lancer.structure',
 }
 
 export const NPC_FEATURE_TYPE = {

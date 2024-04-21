@@ -1,5 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ACTIVATION_TYPE, DEFAULT_ACTION_NAME, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, NPC_FEATURE_TYPE, STAT_TYPE } from './constants.js'
+import { ACTION_TYPE, ACTIVATION_TYPE, DEFAULT_ACTION_NAME, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, MACRO_TYPE, NPC_FEATURE_TYPE, STAT_TYPE } from './constants.js'
 
 export let ActionHandler = null
 
@@ -125,8 +125,8 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         #buildMechActions () {
             this.#buildBasics()
-            //this.#buildCombat()
-            //this.#buildMacros()
+            this.#buildCombat()
+            this.#buildMacros()
             this.#buildStats()
             this.#buildStatuses()
             if (this.showUnequippedItems) {
@@ -146,6 +146,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         #buildMultipleTokenActions () {
             this.#buildBasics()
+            this.#buildCombat()
             this.#buildStats()
             this.#buildStatuses()
         }
@@ -156,8 +157,8 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         #buildNpcActions() {
             this.#buildBasics()
-            //this.#buildCombat()
-            //this.#buildMacros()
+            this.#buildCombat()
+            this.#buildMacros()
             this.#buildNpcFeatures()
             this.#buildStats()
             this.#buildStatuses()
@@ -169,7 +170,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         #buildPilotActions () {
             // Build pilot-specific actions
-            //this.#buildSkillTriggers()
 
             // Following actions already built by #buildMechActions if true
             if (this.pilot) return
@@ -181,7 +181,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             }
             
             this.#buildBasics()
-            //this.#buildCombat()
+            this.#buildCombat()
             this.#buildStats()
             this.#buildStatuses()
         }
@@ -364,11 +364,55 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                         encodedValue,
                     })
                 }
+
+                const id = bondId
+                const name = `Refresh ${bondData.name}`
+                const listName = `Refresh: ${bondData.name}`
+                const encodedValue = ['refresh-powers', bondId].join(this.delimiter)
+
+                actions.push({
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                })
             }
 
             actions.sort(this.#sortActionsByName)
             
             this.addActions(actions, groupData)
+        }
+
+        /**
+         * Build combat
+         * @private
+         */
+        #buildCombat () {
+            if (this.tokens?.length === 0) return
+
+            const groupId = 'combat'
+
+            const combat = [
+                'activate',
+                'deactivate',
+            ]
+
+            combat.map(c => {
+                const id = c
+                const name = coreModule.api.Utils.i18n(ACTION_TYPE[c])
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[groupId])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = [groupId, id].join(this.delimiter)
+
+                const actions = [{
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }]
+                const groupData = { id: groupId, type: 'system' }
+                this.addActions(actions, groupData)
+            })
         }
 
         /**
@@ -455,6 +499,49 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 }
             }
 
+        }
+
+        /**
+         * Build macros
+         * @private
+         */
+        #buildMacros () {
+            if (this.actors?.length === 0) return
+
+            const actionType = 'macro'
+            const groupId = 'macros'
+
+            const macros = [
+                'stabilize',
+                'full-repair',
+                'structure',
+                'overheat',
+            ]
+
+            if (this.actors.every(a => a.type === ENTRY_TYPE.MECH)) {
+                macros.push('overcharge')
+            }
+
+            if (this.actors.every(a => a.type === ENTRY_TYPE.NPC)) {
+                macros.push('recharge')
+            }
+
+            macros.map(m => {
+                const id = m
+                const name = coreModule.api.Utils.i18n(MACRO_TYPE[m])
+                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionType])
+                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                const encodedValue = [m, 'none'].join(this.delimiter)
+
+                const actions = [{
+                    id,
+                    name,
+                    listName,
+                    encodedValue,
+                }]
+                const groupData = { id: groupId, type: 'system' }
+                this.addActions(actions, groupData)
+            })
         }
 
         /**
@@ -606,7 +693,8 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @private
          */
         #buildStats () {
-            const actionType = 'stat'
+            const actionType = ITEM_TYPE['stat']?.actionType
+            const groupId = ITEM_TYPE['stat']?.groupId
 
             const stats = {
                 hull: 'system.hull',
@@ -635,7 +723,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 }
             }).filter(action => action !== undefined)
 
-            const groupData = { id: 'stats', type: 'system' }
+            const groupData = { id: groupId, type: 'system' }
             this.addActions(actions, groupData)
         }
 

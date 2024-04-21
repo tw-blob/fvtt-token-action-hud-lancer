@@ -1,4 +1,4 @@
-import { ID_DELIMITER } from "./constants"
+import { ENTRY_TYPE, ID_DELIMITER } from "./constants"
 
 export let RollHandler = null
 
@@ -69,10 +69,11 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @param {string} actionId     The actionId
          */
         async #handleAction (event, actor, token, actionTypeId, actionId) {
+            const pilot = actor?.system?.pilot ? actor.system.pilot.value : actor
+
             switch (actionTypeId) {
                 case 'activation':
                 case 'frame':
-                case 'talent':
                     this.#handleActivation(actor, actionId)
                     break
                 case 'basic-attack':
@@ -82,7 +83,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     this.#handleBasicTech(actor)
                     break
                 case 'bond':
-                    this.#handleBondAction(actor, actionId)
+                    this.#handleBondAction(pilot, actionId)
                     break
                 case 'combat':
                     this.#handleCombatAction(token, actionId)
@@ -99,8 +100,20 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 case 'overheat':
                     this.#handleOverheat(actor)
                     break
+                case 'pilot-weapon':
+                    this.#handleWeaponAction(pilot, actionId)
+                    break
+                case 'recharge':
+                    this.#handleRechargeAction(actor)
+                    break
+                case 'refresh-powers':
+                    this.#handleRefreshPowersAction(pilot, actionId)
+                    break
                 case 'skill':
-                    this.#handleSkillAction(actor, actionId)
+                    this.#handleSkillAction(pilot, actionId)
+                    break
+                case 'stabilize':
+                    this.#handleStabilizeAction(actor)
                     break
                 case 'stat':
                     this.#handleStatAction(actor, actionId)
@@ -113,6 +126,9 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     break
                 case 'system':
                     this.#handleSystemAction(actor, actionId)
+                    break
+                case 'talent':
+                    this.#handleActivation(pilot, actionId)
                     break
                 case 'tech':
                     this.#handleTechAction(actor, actionId)
@@ -245,6 +261,25 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
+         * Handle refresh powers action
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleRefreshPowersAction (actor, actionId) {
+            const item = actor.items.get(actionId)
+            item.refreshPowers()
+        }
+
+        /**
+         * Handle recharge action
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleRechargeAction (actor) {
+            actor.beginRechargeFlow()
+        }
+
+        /**
          * Handle skill action
          * @private
          * @param {object} actor    The actor
@@ -253,6 +288,15 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         #handleSkillAction(actor, itemId) {
             const skill = actor.items.get(itemId)
             skill.beginSkillFlow()
+        }
+
+        /**
+         * Handle stabilize action
+         * @private
+         * @param {object} actor    The actor
+         */
+        #handleStabilizeAction(actor) {
+            actor.beginStabilizeFlow();
         }
 
         /**

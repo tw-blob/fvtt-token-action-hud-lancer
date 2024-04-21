@@ -48,7 +48,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     { ...groups.freeActions, nestId: 'activations_free-actions' },
                     { ...groups.reactions, nestId: 'activations_reactions' },
                     { ...groups.traits, nestId: 'activations_traits' },
-                    { ...groups.otherActions, nestId: 'activations_other-actions' },
+                    { ...groups.other, nestId: 'activations_other' },
                 ],
 
             },
@@ -68,82 +68,18 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.utility'),
                 groups: [
                     { ...groups.combat, nestId: 'utility_combat' },
-                    { ...groups.repair, nestId: 'utility_repair' },
-                    { ...groups.refresh, nestId: 'utility_refresh' },
+                    { ...groups.macros, nestId: 'utility_macros' },
                 ]
             },
             {
                 nestId: 'statuses',
                 id: 'statuses',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.status'),
+                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.statuses'),
                 groups: [
                     { ...groups.statuses, nestId: 'statuses_statuses' }
                 ]
             }
         ],
-        /*layout: [
-            {
-                nestId: 'pilot',
-                id: 'pilot',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.pilot'),
-                groups: [
-                    { ...groups.skillTriggers, nestId: 'pilot_skill-triggers' },
-                    { ...groups.grit, nestId: 'pilot_grit' },
-                    { ...groups.talents, nestId: 'pilot_talents' },
-                    { ...groups.pilotGear, nestId: 'pilot_pilot-gear' },
-                    { ...groups.pilotWeapons, nestId: 'pilot_pilot-weapons' },
-                    { ...groups.bonds, nestId: 'pilot_bonds' },
-                ]
-            },
-            {
-                nestId: 'mech',
-                id: 'mech',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.mech'),
-                groups: [
-                    { ...groups.hase, nestId: 'mech_hase' },
-                    { ...groups.coreBonuses, nestId: 'mech_core-bonuses' },
-                    { ...groups.corePower, nestId: 'mech_core-power' },
-                    { ...groups.traits, nestId: 'mech_traits' },
-                ]
-            },
-            {
-                nestId: 'weapon',
-                id: 'weapon',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.weapon'),
-                groups: [
-                    { ...groups.mechWeapons, nestId: 'weapon_mech-weapons' },
-                    { ...groups.weaponMods, nestId: 'weapon_weapon-mods' },
-                    { ...groups.attacks, nestId: 'weapon_attacks' },
-                ]
-            },
-            {
-                nestId: 'system',
-                id: 'system',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.system'),
-                groups: [
-                    { ...groups.techs, nestId: 'system_techs' },
-                    { ...groups.systems, nestId: 'system_systems' },
-                    { ...groups.deployables, nestId: 'system_deployables' },
-                ]
-            },
-            {
-                nestId: 'utility',
-                id: 'utility',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.utility'),
-                groups: [
-                    { ...groups.combat, nestId: 'utility_combat' },
-                    { ...groups.repair, nestId: 'utility_repair' }
-                ]
-            },
-            {
-                nestId: 'status',
-                id: 'status',
-                name: coreModule.api.Utils.i18n('tokenActionHud.lancer.status'),
-                groups: [
-                    { ...groups.statuses, nestId: 'status_statuses' }
-                ]
-            }
-        ], */
         groups: groupsArray
     }
 })
