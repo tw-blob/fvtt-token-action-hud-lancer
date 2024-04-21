@@ -71,6 +71,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         async #handleAction (event, actor, token, actionTypeId, actionId) {
             switch (actionTypeId) {
                 case 'activation':
+                case 'frame':
                 case 'talent':
                     this.#handleActivation(actor, actionId)
                     break
@@ -86,7 +87,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 case 'combat':
                     this.#handleCombatAction(token, actionId)
                     break
-                case 'frame':
                 case 'core':
                     this.#handleCoreAction(actor, actionId)
                     break
@@ -104,6 +104,9 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     break
                 case 'stat':
                     this.#handleStatAction(actor, actionId)
+                    break
+                case 'status':
+                    await this.#toggleStatus(actor, token, actionId)
                     break
                 case 'structure':
                     this.#handleStructure(actor)
@@ -149,7 +152,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @param {object} actor    The actor
          */
         #handleBasicTech (actor) {
-            actor.beginBasicTechFlow()
+            actor.beginBasicTechAttackFlow()
         }
 
         /**
@@ -161,7 +164,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         #handleBondAction (actor, actionId) {
             const bondParts = actionId.split(ID_DELIMITER)
             const itemId = bondParts[0]
-            const powerIndex = bondParts[1]
+            const powerIndex = parseInt(bondParts[1])
             const item = actor.items.get(itemId)
             item.beginBondPowerFlow(powerIndex)
         }
@@ -242,6 +245,17 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
+         * Handle skill action
+         * @private
+         * @param {object} actor    The actor
+         * @param {string} itemId   The item id
+         */
+        #handleSkillAction(actor, itemId) {
+            const skill = actor.items.get(itemId)
+            skill.beginSkillFlow()
+        }
+
+        /**
          * Handle stat action
          * @private
          * @param {object} actor    The actor
@@ -252,14 +266,23 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
-         * Handle skill action
+         * Toggle Status
          * @private
          * @param {object} actor    The actor
-         * @param {string} itemId   The item id
+         * @param {object} token    The token 
+         * @param {string} actionId The action id
          */
-        #handleSkillAction(actor, itemId) {
-            const skill = actor.items.get(itemId)
-            skill.beginSkillFlow()
+        async #toggleStatus (actor, token, actionId) {
+            const status = CONFIG.statusEffects.find(status => status.id === actionId)
+
+            if (!status) return
+
+            const effect = this.#findEffect(actor, actionId)
+            if (effect?.disabled) { await effect.delete() }
+
+            await token.toggleEffect(status)
+
+            Hooks.callAll('forceUpdateTokenActionHud')
         }
 
         /**
@@ -302,6 +325,21 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         #handleWeaponAction(actor, itemId) {
             const weapon = actor.items.get(itemId)
             weapon.beginWeaponAttackFlow();
+        }
+
+        /**
+         * Find effect
+         * @param {object} actor    The actor
+         * @param {string} actionId The action id
+         * @returns {object}        The effect
+         */
+        #findEffect (actor, actionId) {
+            if (game.version.startsWith('11')) {
+                return actor.effects.find(effect => effect.statuses.every(status => status === actionId))
+            } else {
+                // V10
+                return actor.effects.find(effect => effect.flags?.core?.statusId === actionId)
+            }
         }
     }
 })

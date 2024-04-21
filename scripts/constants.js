@@ -86,7 +86,7 @@ export const GROUP = {
     reactions: { id: 'reactions', name: 'tokenActionHud.lancer.reactions', type: 'system' },
     refresh: { id: 'refresh', name: 'tokenActionHud.lancer.refresh', type: 'system' },
     repair: { id: 'repair', name: 'tokenActionHud.lancer.repair', type: 'system' },
-    skillTriggers: { id: 'skill-triggers', name: 'tokenActionHud.lancer.skillTriggers', type: 'system' },
+    skills: { id: 'skills', name: 'tokenActionHud.lancer.skills', type: 'system' },
     stats: { id: 'stats', name: 'tokenActionHud.lancer.stats', type: 'system' },
     statuses: { id: 'statuses', name: 'tokenActionHud.lancer.statuses', type: 'system' },
     systems: { id: 'systems', name: 'tokenActionHud.lancer.systems', type: 'system' },
@@ -129,6 +129,7 @@ export const ITEM_TYPE = {
     mech_system: { groupId: 'mech-systems', actionType: 'system' },
     mech_weapon: { groupId: 'mech-weapons', actionType: 'weapon' },
     pilot_weapon: { groupId: 'pilot-weapons', actionType: 'weapon' },
+    skill: { groupId: 'skills', actionType: 'skill' },
     weapon_mod: { groupId: 'weapon-mods', actionType: 'system' },
 }
 
