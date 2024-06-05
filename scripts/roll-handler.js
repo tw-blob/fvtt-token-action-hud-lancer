@@ -195,7 +195,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         async #handleCombatAction (token, actionId) {
             if (!game.combat) return
 
-            const combatant = game.combat?.combatants.find(c => c.token === token)
+            const combatant = game.combat?.combatants.find(c => c.token === token.document)
             if (!combatant) return
 
             switch (actionId) {
@@ -203,7 +203,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     await game.combat?.activateCombatant(combatant.id)
                     break
                 case 'deactivate':
-                    await game.combat?.deactivateCombatant(combatant.id)
+                    await game.combat?.nextTurn()
                     break
             }
         }
