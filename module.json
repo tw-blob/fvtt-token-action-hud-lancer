@@ -24,7 +24,7 @@
   ],
   "url": "https://github.com/OKSombre/fvtt-token-action-hud-lancer",
   "flags": {},
-  "version": "1.0.2",
+  "version": "1.0.3",
   "compatibility": {
     "minimum": "11",
     "verified": "11.315"
@@ -77,9 +77,9 @@
     }
   },
   "socket": false,
-  "manifest": "https://github.com/OKSombre/fvtt-token-action-hud-lancer/releases/download/1.0.2/module.zip",
-  "download": "https://github.com/OKSombre/fvtt-token-action-hud-lancer/releases/latest/download/module.zip",
-  "readme": "https://github.com/OKSombre/fvtt-token-action-hud-lancer#readme",
+  "manifest": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/download/1.0.3/module.zip",
+  "download": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/latest/download/module.zip",
+  "readme": "https://github.com/tw-blob/fvtt-token-action-hud-lancer#readme",
   "protected": false,
   "coreTranslation": false,
   "library": false
