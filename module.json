@@ -26,8 +26,8 @@
   "flags": {},
   "version": "1.0.3",
   "compatibility": {
-    "minimum": "11",
-    "verified": "11.315"
+    "minimum": "12",
+    "verified": "12.331"
   },
   "esmodules": [
     "./scripts/token-action-hud-lancer.min.js"
@@ -52,7 +52,7 @@
         "type": "system",
         "compatibility": [
           {
-            "minimum": "1.4.1",
+            "minimum": "2.6.0",
             "verified": "2.8.0"
           }
         ]
@@ -64,8 +64,7 @@
         "type": "module",
         "compatibility": [
           {
-            "minimum": "1.5.4",
-            "maximum": "2",
+            "minimum": "2.0",
             "verified": "2.0.11"
           }
         ]
