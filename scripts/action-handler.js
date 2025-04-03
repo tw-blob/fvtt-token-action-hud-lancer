@@ -716,7 +716,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             // Get actions
             const actions = statuses.map((status) => {
                 const id = status.id
-                const name = coreModule.api.Utils.i18n(status.label) ?? status.name
+                const name = coreModule.api.Utils.i18n(status.name) ?? status.name
                 const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? ''
                 const listName = `${actionTypeName}${name}`
                 const encodedValue = [actionType, id].join(this.delimiter)

@@ -53,7 +53,7 @@
         "compatibility": [
           {
             "minimum": "1.4.1",
-            "verified": "2.0.0-rc1"
+            "verified": "2.8.0"
           }
         ]
       }
@@ -65,8 +65,8 @@
         "compatibility": [
           {
             "minimum": "1.5.4",
-            "maximum": "1.5",
-            "verified": "1.5.4"
+            "maximum": "2",
+            "verified": "2.0.11"
           }
         ]
       }
