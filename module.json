@@ -82,7 +82,7 @@
   "socket": false,
   "manifest": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/download/1.0.3/module.zip",
   "download": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/latest/download/module.zip",
-  "readme": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/tree/v12-beta#readme",
+  "readme": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/",
   "protected": false,
   "coreTranslation": false,
   "library": false
