@@ -21,8 +21,12 @@
       "name": "OKSombre",
       "url": "https://github.com/OKSombre"
     }
+    {
+      "name": "tw-blob",
+      "url": "https://github.com/tw-blob"
+    }
   ],
-  "url": "https://github.com/OKSombre/fvtt-token-action-hud-lancer",
+  "url": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/",
   "flags": {},
   "version": "1.0.3",
   "compatibility": {
@@ -78,7 +82,7 @@
   "socket": false,
   "manifest": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/download/1.0.3/module.zip",
   "download": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/latest/download/module.zip",
-  "readme": "https://github.com/tw-blob/fvtt-token-action-hud-lancer#readme",
+  "readme": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/tree/v12-beta#readme",
   "protected": false,
   "coreTranslation": false,
   "library": false
