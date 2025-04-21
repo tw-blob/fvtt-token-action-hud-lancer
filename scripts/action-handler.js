@@ -1,5 +1,5 @@
 // System Module Imports
-import { ACTION_TYPE, ACTIVATION_TYPE, DEFAULT_ACTION_NAME, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, MACRO_TYPE, NPC_FEATURE_TYPE, STAT_TYPE } from './constants.js'
+import { ACTION_TYPE, ACTIVATION_TYPE, DEFAULT_ACTION_NAME, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, MACRO_TYPE, NO_ACTION_NAME, NPC_FEATURE_TYPE, NPC_TAG_TYPE, STAT_TYPE } from './constants.js'
 import { Utils } from './utils.js'
 
 export let ActionHandler = null
@@ -178,7 +178,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
                 const activationId = `${dataPath}.${index}`
                 const id = [itemId, activationId].join(ID_DELIMITER)
-                const name = actions[index].name === DEFAULT_ACTION_NAME ? this.items.get(itemId).name : actions[index].name
+                const name = actions[index].name === DEFAULT_ACTION_NAME || actions[index].name === NO_ACTION_NAME ? this.items.get(itemId).name : actions[index].name
                 const activation = {...actions[index], name}
                 activationsMap.get(activationType).set(id, activation)
             }
@@ -232,7 +232,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
                     const activationId = `system.actions.${index}`
                     const id = [key, activationId].join(ID_DELIMITER)
-                    const name = activations[index].name === DEFAULT_ACTION_NAME ? value.name : activations[index].name
+                    const name = activations[index].name === DEFAULT_ACTION_NAME || activations[index].name === NO_ACTION_NAME ? value.name : activations[index].name
                     const activation = {...activations[index], name}
                     activationsMap.get(activationType).set(id, activation)
                 }
@@ -556,51 +556,64 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             this.#buildFrame(frameMap)
         }
 
-        /**
-         * Build npc features
-         * @private
-         */
-        #buildNpcFeatures () {
-            if (this.items.size === 0) return
+/**
+ * Build npc features
+ * @private
+ */
+#buildNpcFeatures () {
+    if (this.items.size === 0) return
 
-            const featuresMap = new Map()
+    const featuresMap = new Map()
 
-            for (const [itemId, itemData] of this.items) {
-                const type = itemData.system.type
-                
-                if (this.#isUsableItem(itemData)) {
-                    const typeMap = featuresMap.get(type) ?? new Map()
-                    typeMap.set(itemId, itemData)
-                    featuresMap.set(type, typeMap)
-                }
-            }
-            
-            for (const [type, typeMap] of featuresMap) {
-                const groupId = NPC_FEATURE_TYPE[type]?.groupId
+    for (const [itemId, itemData] of this.items) {
+        const tags = Array.isArray(itemData.system.tags) ? itemData.system.tags : []
+        let matched = false
 
-                if (!groupId) continue
-
-                const groupData = { id: groupId, type: 'system' }
-
-                // Get actions
-                const actions = [...typeMap].map(([id, data]) => {
-                    const name = data.name
-                    const actionType = NPC_FEATURE_TYPE[type]?.actionType
-                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionType])
-                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
-                    const encodedValue = [actionType, id].join(this.delimiter)
-
-                    return {
-                        id,
-                        name,
-                        listName,
-                        encodedValue,
-                    }
-                })
-                
-                this.addActions(actions, groupData)
+        // Generate a feature for each matching tag
+        for (const tag of tags) {
+            const tagData = NPC_TAG_TYPE[tag.lid]
+            if (tagData) {
+                matched = true
+                const { groupId, actionType } = tagData
+                const list = featuresMap.get(groupId) ?? []
+                list.push({ id: itemId, data: itemData, actionType })
+                featuresMap.set(groupId, list)
             }
         }
+
+        // Fallback to type logic if no tags matched
+        if (!matched) {
+            const type = itemData.system.type
+            const typeGroup = NPC_FEATURE_TYPE[type]
+            if (!typeGroup) continue
+            const { groupId, actionType } = typeGroup
+            const list = featuresMap.get(groupId) ?? []
+            list.push({ id: itemId, data: itemData, actionType })
+            featuresMap.set(groupId, list)
+        }
+    }
+
+    for (const [groupId, entries] of featuresMap) {
+        const groupData = { id: groupId, type: 'system' }
+
+        const actions = entries.map(({ id, data, actionType }) => {
+            const name = data.name
+            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionType])
+            const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+            const encodedValue = [actionType, id].join(this.delimiter)
+
+            return {
+                id,
+                name,
+                listName,
+                encodedValue,
+            }
+        })
+
+        this.addActions(actions, groupData)
+    }
+}
+
 
         /**
          * Build pilot loadout
@@ -721,7 +734,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 const listName = `${actionTypeName}${name}`
                 const encodedValue = [actionType, id].join(this.delimiter)
                 const active = this.actors.every((actor) => {
-                    if (game.version.startsWith('11')) {
+                    if (game.version.startsWith('12')) {
                         return actor.effects.some(effect => effect.statuses.some(status => status === id) && !effect?.disabled)
                     } else {
                         // V10
