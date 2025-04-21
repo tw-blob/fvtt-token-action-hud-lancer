@@ -61,7 +61,8 @@ export const ACTIVATION_TYPE = {
     "Free": { groupId: 'free-actions', actionType: 'free-action' },
 }
 
-export const DEFAULT_ACTION_NAME = "New Action"
+export const DEFAULT_ACTION_NAME = "New action"
+export const NO_ACTION_NAME = "Action"
 
 /**
  * Groups
@@ -150,6 +151,7 @@ export const MACRO_TYPE = {
     structure: 'tokenActionHud.lancer.structure',
 }
 
+
 export const NPC_FEATURE_TYPE = {
     Reaction: { groupId: 'reactions', actionType: 'system' },
     System: { groupId: 'systems', actionType: 'system' },
@@ -157,6 +159,30 @@ export const NPC_FEATURE_TYPE = {
     Trait: { groupId: 'traits', actionType: 'system' },
     Weapon: { groupId: 'mech-weapons', actionType: 'weapon' },
 }
+
+// Test change to group based on tags.
+export const NPC_TAG_TYPE = {
+/*    "None": { groupId: 'other-actions', actionType: 'other' },
+    "Passive": { groupId: 'other-actions', actionType: 'other' },
+    "Quick": { groupId: 'quick-actions', actionType: 'quick-action' },
+    "Quick Tech": { groupId: 'quick-techs', actionType: 'quick-tech' },
+    "Invade": { groupId: 'invades', actionType: 'invade' },
+    "Full": { groupId: 'full-actions', actionType: 'full-action' },
+    "Full Tech": { groupId: 'full-techs', actionType: 'full-tech' },
+    "Other": { groupId: 'other-actions', actionType: 'other' },
+    "Reaction": { groupId: 'reactions', actionType: 'reaction' },
+    "Protocol": { groupId: 'protocols', actionType: 'protocol' },
+    "Free": { groupId: 'free-actions', actionType: 'free-action' },
+*/
+    tg_full_action: { groupId: 'full-actions', actionType: 'system' },
+    tg_quick_action: { groupId: 'quick-actions', actionType: 'system' },
+    tg_quick_tech: { groupId: 'quick-techs', actionType: 'tech' },
+    tg_full_tech: { groupId: 'full-techs', actionType: 'tech' },
+    tg_reaction: { groupId: 'reactions', actionType: 'system' },
+    tg_protocol: { groupId: 'protocols', actionType: 'system' },
+    tg_free_action: { groupId: 'free-actions', actionType: 'system' },
+}
+
 
 export const STAT_TYPE = {
     hull: 'tokenActionHud.lancer.hul',

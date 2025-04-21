@@ -379,7 +379,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * @returns {object}        The effect
          */
         #findEffect (actor, actionId) {
-            if (game.version.startsWith('11')) {
+            if (game.version.startsWith('12')) {
                 return actor.effects.find(effect => effect.statuses.every(status => status === actionId))
             } else {
                 // V10

@@ -30,6 +30,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 id: 'techs',
                 name: coreModule.api.Utils.i18n('tokenActionHud.lancer.techs'),
                 groups: [
+                    { ...groups.techs, nestId: 'techs' },
                     { ...groups.quickTechs, nestId: 'techs_quick-techs' },
                     { ...groups.fullTechs, nestId: 'techs_full-techs' },
                     { ...groups.invades, nestId: 'techs_invades' },
@@ -47,7 +48,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     { ...groups.fullActions, nestId: 'activations_full-actions' },
                     { ...groups.freeActions, nestId: 'activations_free-actions' },
                     { ...groups.reactions, nestId: 'activations_reactions' },
-                    { ...groups.traits, nestId: 'activations_traits' },
+                    { ...groups.systems, nestId: 'activations_systems' },
                     { ...groups.other, nestId: 'activations_other' },
                 ],
 
