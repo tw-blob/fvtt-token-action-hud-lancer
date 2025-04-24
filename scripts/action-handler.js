@@ -366,6 +366,10 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const combat = [
                 'activate',
                 'deactivate',
+                'add_combatant',
+                'remove_combatant',
+                'reveal_token',
+                'hide_token',
             ]
 
             combat.map(c => {

@@ -194,9 +194,26 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         async #handleCombatAction (token, actionId) {
             if (!game.combat) return
+            /*{
+                if (game.user.isGM) {
+                    const hidden = canvas.tokens.placeables.find((t) => t.id === tokenId).document.hidden
+                    switch (actionId) {
+                        case 'hide_token':
+                            await game.combat?.activateCombatant(combatant.id)
+                            break
+                        case 'reveal_token':
+                            await game.combat?.nextTurn()
+                            break
+                }
+            }
+            */actionId
 
             const combatant = game.combat?.combatants.find(c => c.token === token.document)
-            if (!combatant) return
+            if (!combatant) {
+                'add_combatant':
+                await token.toggleCombat()
+                break
+            }
 
             switch (actionId) {
                 case 'activate':
