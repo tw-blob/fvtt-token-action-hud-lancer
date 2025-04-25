@@ -68,6 +68,11 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 'Passive',
                 'Other',
             ]
+            const selectedTokens = canvas.tokens.controlled;
+            if (selectedTokens.length > 1) {
+            this.#buildMultipleTokenActions();
+            return;
+            }
 
             switch (this.actorType) {
                 case ENTRY_TYPE.MECH:
@@ -84,10 +89,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     break
             }
 
-            // TODO: Find a way to handle multiple token actions at once
-            //if (!this.actor) {
-            //    this.#buildMultipleTokenActions()
-            //}
+           
         }
 
         /**
@@ -358,7 +360,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * Build combat
          * @private
          */
-        #buildCombat () {
+/*        #buildCombat () {
             if (this.tokens?.length === 0) return
 
             const groupId = 'combat'
@@ -366,11 +368,21 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const combat = [
                 'activate',
                 'deactivate',
-                'add_combatant',
-                'remove_combatant',
-                'reveal_token',
-                'hide_token',
             ]
+
+            if (game.user.isGM) {
+                const token = this.token
+
+                // Add action based on token visibility
+                if (token) {
+                    const visibilityAction = token.document.hidden ? 'reveal_token' : 'hide_token'
+                    combat.push(visibilityAction)
+
+                    // Add action besed on token combat state
+                    const combatantAction = token.inCombat ? 'remove_combatant' : 'add_combatant'
+                    combat.push(combatantAction)
+                }
+            }
 
             combat.map(c => {
                 const id = c
@@ -389,6 +401,59 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 this.addActions(actions, groupData)
             })
         }
+*/
+
+#buildCombat() {
+    const tokens = canvas.tokens.controlled;
+    if (!tokens?.length) return;
+  
+    const groupId = 'combat';
+    const actions = [];
+  
+    if (tokens.length === 1) {
+       actions.push('activate', 'deactivate');
+  
+        const visibilityAction = !tokens[0].document.hidden ? 'hide_token' : 'reveal_token';
+        actions.push(visibilityAction);
+
+        const combatantAction = !tokens[0].inCombat ? 'add_combatant' : 'remove_combatant';
+        actions.push(combatantAction);
+    }
+    
+    else {
+        const anyVisible = tokens.some(t => !t.document.hidden);
+        const visibilityAction = anyVisible ? 'hide_token' : 'reveal_token';
+        actions.push(visibilityAction);
+  
+        const anyNotInCombat = tokens.some(t => !t.inCombat);
+        const combatantAction = anyNotInCombat ? 'add_combatant' : 'remove_combatant';
+        actions.push(combatantAction);
+    }
+  
+    const order = ['hide_token', 'reveal_token', 'add_combatant', 'remove_combatant'];
+    actions.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+
+    // Build and register each action entry
+    actions.map(c => {
+      const id = c;
+      const name = coreModule.api.Utils.i18n(ACTION_TYPE[c]);
+      const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[groupId]);
+      const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`;
+      const encodedValue = [groupId, id].join(this.delimiter);
+      const priority = order.indexOf(id);
+  
+      const actionEntry = [{
+        id,
+        name,
+        listName,
+        encodedValue,
+        priority
+      }];
+      const groupData = { id: groupId, type: 'system' };
+      this.addActions(actionEntry, groupData);
+    });
+  }
+
 
         /**
          * Build frame traits and core active
