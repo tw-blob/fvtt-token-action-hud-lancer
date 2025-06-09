@@ -74,11 +74,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             return;
             }
 
-            const selectedTokens = canvas.tokens.controlled;
-            if (selectedTokens.length > 1) {
-            this.#buildMultipleTokenActions();
-            return;
-            }
 
             switch (this.actorType) {
                 case ENTRY_TYPE.MECH:
