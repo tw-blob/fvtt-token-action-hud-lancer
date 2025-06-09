@@ -8,39 +8,52 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
      */
     RollHandler = class RollHandler extends coreModule.api.RollHandler {
         /**
-         * Handle action click
-         * Called by Token Action HUD Core when an action is left or right-clicked
-         * @override
-         * @param {object} event        The event
-         * @param {string} encodedValue The encoded value
-         */
-        async handleActionClick (event, encodedValue) {
-            const [actionTypeId, actionId] = encodedValue.split(this.delimiter)
-
-            const renderable = ['weapon']
-
-            if (renderable.includes(actionTypeId) && this.isRenderItem()) {
-                return this.doRenderItem(this.actor, actionId)
-            }
-
-            const knownCharacters = ['pilot', 'npc', 'mech', 'deployable']
-
-            // If single actor is selected
-            if (this.actor) {
-                await this.#handleAction(event, this.actor, this.token, actionTypeId, actionId)
-                return
-            }
-
-            const controlledTokens = canvas.tokens.controlled
-                .filter((token) => knownCharacters.includes(token.actor?.type))
-
-            // TODO: Find a way to handle multiple token actions at once
-            // If multiple actors are selected
-            //for (const token of controlledTokens) {
-            //    const actor = token.actor
-            //    await this.#handleAction(event, actor, token, actionTypeId, actionId)
-            //}
-        }
+ * Handle action click
+ * Called by Token Action HUD Core when an action is left or right-clicked
+ * @override
+ * @param {object} event        The event
+ * @param {string} encodedValue The encoded value
+ */
+async handleActionClick(event, encodedValue) {
+    const [actionTypeId, actionId] = encodedValue.split(this.delimiter);
+  
+    // Renderable items (e.g., weapon previews)
+    const renderable = ['weapon'];
+    if (renderable.includes(actionTypeId) && this.isRenderItem()) {
+      return this.doRenderItem(this.actor, actionId);
+    }
+  
+    // Known actor types for token actions
+    const knownCharacters = ['pilot', 'npc', 'mech', 'deployable'];
+    const controlledTokens = canvas.tokens.controlled.filter(token =>
+      knownCharacters.includes(token.actor?.type)
+    );
+  
+    // If a single actor is selected, handle normally
+    if (this.actor) {
+      await this.#handleAction(event, this.actor, this.token, actionTypeId, actionId);
+      return;
+    }
+  
+    // If multiple tokens are selected, run the action for each, ensuring the current one runs first
+    if (controlledTokens.length > 1) {
+      // Run on the primary (hovered) token first
+      await this.#handleAction(
+        event,
+        controlledTokens[0].actor,
+        controlledTokens[0],
+        actionTypeId,
+        actionId
+      );
+      // Then run on each of the others
+      for (let i = 1; i < controlledTokens.length; i++) {
+        const tk = controlledTokens[i];
+        await this.#handleAction(event, tk.actor, tk, actionTypeId, actionId);
+      }
+      return;
+    }
+  }
+  
 
         /**
          * Handle action hover
@@ -117,7 +130,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     this.#handleStabilizeAction(actor)
                     break
                 case 'stat':
-                    this.#handleStatAction(actor, actionId)
+                    await this.#handleStatAction(actor, actionId)
                     break
                 case 'status':
                     await this.#toggleStatus(actor, token, actionId)
@@ -187,43 +200,44 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
         
         /**
-         * Handle combat action
-         * @private
-         * @param {object} token    The token
-         * @param {string} actionId The action id
-         */
-        async #handleCombatAction (token, actionId) {
-            if (!game.combat) return
-            /*{
-                if (game.user.isGM) {
-                    const hidden = canvas.tokens.placeables.find((t) => t.id === tokenId).document.hidden
-                    switch (actionId) {
-                        case 'hide_token':
-                            await game.combat?.activateCombatant(combatant.id)
-                            break
-                        case 'reveal_token':
-                            await game.combat?.nextTurn()
-                            break
-                }
-            }
-            */actionId
-
-            const combatant = game.combat?.combatants.find(c => c.token === token.document)
-            if (!combatant) {
-                'add_combatant':
-                await token.toggleCombat()
-                break
-            }
-
-            switch (actionId) {
-                case 'activate':
-                    await game.combat?.activateCombatant(combatant.id)
-                    break
-                case 'deactivate':
-                    await game.combat?.nextTurn()
-                    break
-            }
-        }
+ * Handle combat action for exactly one token
+ * @private
+ * @param {object} token    The token
+ * @param {string} actionId The action id
+ */
+async #handleCombatAction(token, actionId) {
+    const needsCombat = ['activate', 'deactivate'].includes(actionId);
+    if (needsCombat && !game.combat) return;
+  
+    const tokenDoc = token.document;
+    const combatant = tokenDoc.combatant;
+    const isInCombat = token.inCombat;
+  
+    switch (actionId) {
+      case 'activate':
+        if (combatant) await game.combat.activateCombatant(combatant.id);
+        break;
+      case 'deactivate':
+        if (combatant) await game.combat.nextTurn();
+        break;
+      case 'reveal_token':
+        await tokenDoc.update({ hidden: false });
+        break;
+      case 'hide_token':
+        await tokenDoc.update({ hidden: true });
+        break;
+      case 'add_combatant':
+        if (!isInCombat) await tokenDoc.toggleCombatant(true);
+        break;
+      case 'remove_combatant':
+        if (isInCombat) await tokenDoc.toggleCombatant(false);
+        break;
+    }
+  
+    // Refresh the HUD for this single token
+    Hooks.callAll('forceUpdateTokenActionHud');
+  }
+  
 
         /**
          * Handle core activation
@@ -318,14 +332,18 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
         }
 
         /**
-         * Handle stat action
-         * @private
-         * @param {object} actor    The actor
-         * @param {string} statPath The stat path
-         */
-        #handleStatAction(actor, statPath) {
-            actor.beginStatFlow(statPath);
-        }
+ * Handle stat action with flow queuing
+ * Waits until the current stat flow finishes before proceeding
+ * @private
+ * @param {object} actor    The actor
+ * @param {string} statPath The stat path
+ */
+        async #handleStatAction(actor, statPath) {
+            await actor.beginStatFlow(statPath);
+          }
+          
+          
+          
 
         /**
          * Toggle Status

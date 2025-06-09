@@ -23,6 +23,7 @@ export const REQUIRED_CORE_MODULE_VERSION = '2.0'
 export const ACTION_TYPE = {
     activate: 'tokenActionHud.lancer.activate',
     activation: 'tokenActionHud.lancer.activation',
+    add_combatant: 'tokenActionHud.lancer.add_combatant',
     'basic-attack': 'tokenActionHud.lancer.basicAttack',
     'basic-tech': 'tokenActionHud.lancer.basicTech',
     bond: 'tokenActionHud.lancer.bond',
@@ -32,6 +33,7 @@ export const ACTION_TYPE = {
     'free-action': 'tokenActionHud.lancer.freeAction',
     'full-action': 'tokenActionHud.lancer.fullAction',
     'full-tech': 'tokenActionHud.lancer.fullTech',
+    hide_token: 'tokenActionHud.lancer.hide_token',
     invade: 'tokenActionHud.lancer.invade',
     other: 'tokenActionHud.lancer.other',
     'pilot-weapon': 'tokenActionHud.lancer.pilotWeapon',
@@ -39,12 +41,14 @@ export const ACTION_TYPE = {
     'quick-tech': 'tokenActionHud.lancer.quickTech',
     protocol: 'tokenActionHud.lancer.protocol',
     reaction: 'tokenActionHud.lancer.reaction',
+    remove_combatant: 'tokenActionHud.lancer.remove_combatant',
+    reveal_token: 'tokenActionHud.lancer.reveal_token',
     stat: 'tokenActionHud.lancer.stat',
     status: 'tokenActionHud.lancer.status',
     system: 'tokenActionHud.lancer.system',
     talent: 'tokenActionHud.lancer.talent',
     tech: 'tokenActionHud.lancer.tech',
-    weapon: 'tokenActionHud.lancer.weapon',
+    weapon: 'tokenActionHud.lancer.weapon'
 }
 
 export const ACTIVATION_TYPE = {
