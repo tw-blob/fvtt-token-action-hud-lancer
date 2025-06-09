@@ -69,6 +69,12 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 'Other',
             ]
 
+            const selectedTokens = canvas.tokens.controlled;
+            if (selectedTokens.length > 1) {
+            this.#buildMultipleTokenActions();
+            return;
+            }
+
             switch (this.actorType) {
                 case ENTRY_TYPE.MECH:
                     this.#buildMechActions()
@@ -84,10 +90,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     break
             }
 
-            // TODO: Find a way to handle multiple token actions at once
-            //if (!this.actor) {
-            //    this.#buildMultipleTokenActions()
-            //}
         }
 
         /**
@@ -223,6 +225,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const activationsMap = new Map()
 
             for (const [key, value] of items) {
+                if (!this.#isValidItem(value)) continue;
                 const activations = value.system.actions
                 for (const index of activations.keys()) {
                     const activationType = activations[index].activation
@@ -316,6 +319,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             // Get actions
             let actions = []
             for (const [bondId, bondData] of bonds) {
+                if (!this.#isValidItem(bondData)) continue;
                 const powers = bondData.system.powers
                 for (const index of powers.keys()) {
                     const power = powers[index]
@@ -358,37 +362,57 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          * Build combat
          * @private
          */
-        #buildCombat () {
-            if (this.tokens?.length === 0) return
+        #buildCombat() {
+            const tokens = canvas.tokens.controlled;
+            if (!tokens?.length) return;
+        
+            const groupId = 'combat';
+            const actions = [];
+        
+            if (tokens.length === 1) {
+            actions.push('activate', 'deactivate');
+        
+                const visibilityAction = !tokens[0].document.hidden ? 'hide_token' : 'reveal_token';
+                actions.push(visibilityAction);
 
-            const groupId = 'combat'
+                const combatantAction = !tokens[0].inCombat ? 'add_combatant' : 'remove_combatant';
+                actions.push(combatantAction);
+            }
+            
+            else {
+                const anyVisible = tokens.some(t => !t.document.hidden);
+                const visibilityAction = anyVisible ? 'hide_token' : 'reveal_token';
+                actions.push(visibilityAction);
+        
+                const anyNotInCombat = tokens.some(t => !t.inCombat);
+                const combatantAction = anyNotInCombat ? 'add_combatant' : 'remove_combatant';
+                actions.push(combatantAction);
+            }
+        
+            const order = ['hide_token', 'reveal_token', 'add_combatant', 'remove_combatant'];
+            actions.sort((a, b) => order.indexOf(a) - order.indexOf(b));
 
-            const combat = [
-                'activate',
-                'deactivate',
-                'add_combatant',
-                'remove_combatant',
-                'reveal_token',
-                'hide_token',
-            ]
-
-            combat.map(c => {
-                const id = c
-                const name = coreModule.api.Utils.i18n(ACTION_TYPE[c])
-                const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[groupId])
-                const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
-                const encodedValue = [groupId, id].join(this.delimiter)
-
-                const actions = [{
-                    id,
-                    name,
-                    listName,
-                    encodedValue,
-                }]
-                const groupData = { id: groupId, type: 'system' }
-                this.addActions(actions, groupData)
-            })
+            // Build and register each action entry
+            actions.map(c => {
+            const id = c;
+            const name = coreModule.api.Utils.i18n(ACTION_TYPE[c]);
+            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[groupId]);
+            const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`;
+            const encodedValue = [groupId, id].join(this.delimiter);
+            const priority = order.indexOf(id);
+        
+            const actionEntry = [{
+                id,
+                name,
+                listName,
+                encodedValue,
+                priority
+            }];
+            const groupData = { id: groupId, type: 'system' };
+            this.addActions(actionEntry, groupData);
+            });
         }
+
 
         /**
          * Build frame traits and core active
@@ -401,6 +425,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const actionTypeId = 'frame'
 
             for (const [key, value] of items) {
+                if (!this.#isValidItem(value)) continue;
                 const activeActions = value.system.core_system.active_actions
                 const passiveActions = value.system.core_system.passive_actions
                 const traits = value.system.traits                                          
@@ -438,6 +463,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const inventoryMap = new Map()
 
             for (const [itemId, itemData] of inventory) {
+                if (!this.#isValidItem(itemData)) continue;
                 const type = itemData.system.type ?? itemData.type
 
                 if (this.#isUsableItem(itemData)) {
@@ -560,63 +586,64 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             this.#buildFrame(frameMap)
         }
 
-/**
- * Build npc features
- * @private
- */
-#buildNpcFeatures () {
-    if (this.items.size === 0) return
+        /**
+         * Build npc features
+         * @private
+         */
+        #buildNpcFeatures () {
+            if (this.items.size === 0) return
 
-    const featuresMap = new Map()
+            const featuresMap = new Map()
 
-    for (const [itemId, itemData] of this.items) {
-        const tags = Array.isArray(itemData.system.tags) ? itemData.system.tags : []
-        let matched = false
+            for (const [itemId, itemData] of this.items) {
+                if (!this.#isValidItem(itemData)) continue;
+                const tags = Array.isArray(itemData.system.tags) ? itemData.system.tags : []
+                let matched = false
 
-        // Generate a feature for each matching tag
-        for (const tag of tags) {
-            const tagData = NPC_TAG_TYPE[tag.lid]
-            if (tagData) {
-                matched = true
-                const { groupId, actionType } = tagData
-                const list = featuresMap.get(groupId) ?? []
-                list.push({ id: itemId, data: itemData, actionType })
-                featuresMap.set(groupId, list)
+                // Generate a feature for each matching tag
+                for (const tag of tags) {
+                    const tagData = NPC_TAG_TYPE[tag.lid]
+                    if (tagData) {
+                        matched = true
+                        const { groupId, actionType } = tagData
+                        const list = featuresMap.get(groupId) ?? []
+                        list.push({ id: itemId, data: itemData, actionType })
+                        featuresMap.set(groupId, list)
+                    }
+                }
+
+                // Fallback to type logic if no tags matched
+                if (!matched) {
+                    const type = itemData.system.type
+                    const typeGroup = NPC_FEATURE_TYPE[type]
+                    if (!typeGroup) continue
+                    const { groupId, actionType } = typeGroup
+                    const list = featuresMap.get(groupId) ?? []
+                    list.push({ id: itemId, data: itemData, actionType })
+                    featuresMap.set(groupId, list)
+                }
+            }
+
+            for (const [groupId, entries] of featuresMap) {
+                const groupData = { id: groupId, type: 'system' }
+
+                const actions = entries.map(({ id, data, actionType }) => {
+                    const name = data.name
+                    const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionType])
+                    const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
+                    const encodedValue = [actionType, id].join(this.delimiter)
+
+                    return {
+                        id,
+                        name,
+                        listName,
+                        encodedValue,
+                    }
+                })
+
+                this.addActions(actions, groupData)
             }
         }
-
-        // Fallback to type logic if no tags matched
-        if (!matched) {
-            const type = itemData.system.type
-            const typeGroup = NPC_FEATURE_TYPE[type]
-            if (!typeGroup) continue
-            const { groupId, actionType } = typeGroup
-            const list = featuresMap.get(groupId) ?? []
-            list.push({ id: itemId, data: itemData, actionType })
-            featuresMap.set(groupId, list)
-        }
-    }
-
-    for (const [groupId, entries] of featuresMap) {
-        const groupData = { id: groupId, type: 'system' }
-
-        const actions = entries.map(({ id, data, actionType }) => {
-            const name = data.name
-            const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionType])
-            const listName = `${actionTypeName ? `${actionTypeName}: ` : ''}${name}`
-            const encodedValue = [actionType, id].join(this.delimiter)
-
-            return {
-                id,
-                name,
-                listName,
-                encodedValue,
-            }
-        })
-
-        this.addActions(actions, groupData)
-    }
-}
 
 
         /**
@@ -631,13 +658,11 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const items = coreModule.api.Utils.sortItemsByName(pilot.items)
 
             for (const [key, value] of items) {
+                if (!this.#isValidItem(value)) continue;
                 if (!value.system.equipped) continue
 
                 loadoutMap.set(key, value)
             }
-
-            
-
             this.#buildInventory(loadoutMap)
         }
 
@@ -659,6 +684,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
             // Get actions
             const actions = [...skills].map(([skillId, skillData]) => {
+                if (!this.#isValidItem(skillData)) return null;
                 const id = skillId
                 const name = skillData.name
                 const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
@@ -671,7 +697,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     listName,
                     encodedValue,
                 }
-            })
+            }).filter(action => action !== null)
             
             this.addActions(actions, groupData)
         }
@@ -778,6 +804,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const activationsMap = new Map()
 
             for (const [key, value] of items) {
+                if (!this.#isValidItem(value)) continue;
                 const curr_rank = value.system.curr_rank
                 for (let rank = 0; rank < curr_rank; rank++) {
                     const talent = value.system.ranks[rank]
@@ -838,6 +865,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
             // Get actions
             const actions = [...weapons].map(([weaponId, weaponData]) => {
+                if (!this.#isValidItem(weaponData)) return null;
                 const id = weaponId
                 const name = weaponData.name
                 const actionTypeName = coreModule.api.Utils.i18n(ACTION_TYPE[actionTypeId])
@@ -850,7 +878,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     listName,
                     encodedValue,
                 }
-            })
+            }).filter(action => action !== null)
             
             this.addActions(actions, groupData)
         }
@@ -914,6 +942,21 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             }
 
             return true
+        }
+
+        /**
+         * Check if an item is valid (not null/undefined and has a non-null/undefined id).
+         * Logs a warning if the item is invalid.
+         * @private
+         * @param {*} item The item data to validate.
+         * @returns {boolean} True if the item is valid, false otherwise.
+         */
+        #isValidItem(item) {
+            if (!item || item.id == null) {
+                Utils.logInvalidItem(item, this.actor);
+                return false;
+            }
+            return true;
         }
 
         /**
