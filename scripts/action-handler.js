@@ -1,6 +1,6 @@
 // System Module Imports
 import { ACTION_TYPE, ACTIVATION_TYPE, DEFAULT_ACTION_NAME, ENTRY_TYPE, ID_DELIMITER, ITEM_TYPE, MACRO_TYPE, NO_ACTION_NAME, NPC_FEATURE_TYPE, NPC_TAG_TYPE, STAT_TYPE } from './constants.js'
-import { Utils } from './utils.js'
+import { Utils, logInvalidItem } from './utils.js'
 
 export let ActionHandler = null
 
@@ -225,18 +225,23 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
             for (const [key, value] of items) {
                 if (!this.#isValidItem(value)) continue;
-                const activations = value.system.actions
-                for (const index of activations.keys()) {
-                    const activationType = activations[index].activation
+                const activations = value.system?.actions;
+                if (!activations || typeof activations !== 'object') continue;
+                for (const index of Object.keys(activations)) {
+                    const activation = activations[index];
+                    if (!activation || activation.id == null) {
+                        logInvalidItem(activation, this.actor, `item.actions[${index}]`);
+                        continue;
+                    }
+                    const activationType = activation.activation
                     if (!this.showItemsWithoutActivations && this.nonActivations.includes(activationType)) continue
 
                     if (!activationsMap.has(activationType)) activationsMap.set(activationType, new Map())
 
                     const activationId = `system.actions.${index}`
                     const id = [key, activationId].join(ID_DELIMITER)
-                    const name = activations[index].name === DEFAULT_ACTION_NAME || activations[index].name === NO_ACTION_NAME ? value.name : activations[index].name
-                    const activation = {...activations[index], name}
-                    activationsMap.get(activationType).set(id, activation)
+                    const name = activation.name === DEFAULT_ACTION_NAME || activation.name === NO_ACTION_NAME ? value.name : activation.name
+                    activationsMap.get(activationType).set(id, {...activation, name})
                 }
             }
 
@@ -556,28 +561,60 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
             const weaponsMap = new Map()
             const weaponModsMap = new Map()
 
-            // Iterate through loadout rather than items
-            const systems = loadout.systems
-            const systemsMap = new Map(systems.map(s => [s.id, s.value]))
-            const frame = loadout.frame
-            const frameMap = new Map([[frame.id, frame.value]])
+            // Defensive: check systems
+            let systemsMap = new Map()
+            if (Array.isArray(loadout.systems)) {
+                systemsMap = new Map(
+                    loadout.systems
+                        .filter(s => s && s.id && s.value)
+                        .map(s => [s.id, s.value])
+                )
+            } else if (loadout.systems) {
+                logInvalidItem(loadout.systems, this.actor, 'mechLoadout.systems')
+            }
 
-            const mounts = loadout.weapon_mounts
+            // Defensive: check frame
+            let frameMap = new Map()
+            if (loadout.frame && loadout.frame.id && loadout.frame.value) {
+                frameMap = new Map([[loadout.frame.id, loadout.frame.value]])
+            } else if (loadout.frame) {
+                logInvalidItem(loadout.frame, this.actor, 'mechLoadout.frame')
+            }
 
-            for (const mount of mounts) {
+            // Defensive: check weapon_mounts
+            const mounts = Array.isArray(loadout.weapon_mounts) ? loadout.weapon_mounts : []
+            if (!Array.isArray(loadout.weapon_mounts)) {
+                logInvalidItem(loadout.weapon_mounts, this.actor, 'mechLoadout.weapon_mounts')
+            }
+
+            for (const mountIdx in mounts) {
+                const mount = mounts[mountIdx]
+                if (!mount || !Array.isArray(mount.slots)) {
+                    logInvalidItem(mount, this.actor, `mechLoadout.mounts[${mountIdx}]`)
+                    continue
+                }
                 if (mount.slots.length === 0) continue
 
-                mount.slots.map(s => {
-                    if (s.weapon && this.#isUsableItem(s.weapon.value)) {
-                        weaponsMap.set(s.weapon.id, s.weapon.value)
+                mount.slots.forEach((s, slotIdx) => {
+                    // Check weapon slot
+                    if (s && s.weapon) {
+                        if (!s.weapon.value || !s.weapon.id) {
+                            logInvalidItem(s.weapon, this.actor, `mechLoadout.mounts[${mountIdx}].slots[${slotIdx}].weapon`)
+                        } else if (this.#isUsableItem(s.weapon.value)) {
+                            weaponsMap.set(s.weapon.id, s.weapon.value)
+                        }
                     }
-                    if (s.mod && this.#isUsableItem(s.mod.value)) {
-                        weaponModsMap.set(s.mod.id, s.mod.value)
+                    // Check mod slot
+                    if (s && s.mod) {
+                        if (!s.mod.value || !s.mod.id) {
+                            logInvalidItem(s.mod, this.actor, `mechLoadout.mounts[${mountIdx}].slots[${slotIdx}].mod`)
+                        } else if (this.#isUsableItem(s.mod.value)) {
+                            weaponModsMap.set(s.mod.id, s.mod.value)
+                        }
                     }
                 })
             }
 
-            // Systems are pretty much only activations
             this.#buildWeapons(weaponsMap, ENTRY_TYPE.MECH_WEAPON)
             this.#buildItemActions(weaponsMap, ENTRY_TYPE.MECH_WEAPON)
             this.#buildWeapons(weaponModsMap, ENTRY_TYPE.WEAPON_MOD)
@@ -805,10 +842,16 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
 
             for (const [key, value] of items) {
                 if (!this.#isValidItem(value)) continue;
-                const curr_rank = value.system.curr_rank
+                const curr_rank = value.system?.curr_rank;
+                if (!curr_rank || !Array.isArray(value.system?.ranks)) continue;
                 for (let rank = 0; rank < curr_rank; rank++) {
-                    const talent = value.system.ranks[rank]
+                    const talent = value.system.ranks[rank];
+                    if (!talent || !Array.isArray(talent.actions)) continue;
                     talent.actions.map((action, index) => {
+                        if (!action || action.id == null) {
+                            logInvalidItem(action, this.actor, `talent.actions[${rank}][${index}]`);
+                            return;
+                        }
                         const activationType = action.activation
                         if (!this.showItemsWithoutActivations && this.nonActivations.includes(activationType)) return
 
@@ -953,7 +996,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
          */
         #isValidItem(item) {
             if (!item || item.id == null) {
-                Utils.logInvalidItem(item, this.actor);
+                logInvalidItem(item, this.actor);
                 return false;
             }
             return true;
