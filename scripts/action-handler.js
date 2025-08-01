@@ -229,7 +229,7 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 if (!activations || typeof activations !== 'object') continue;
                 for (const index of Object.keys(activations)) {
                     const activation = activations[index];
-                    if (!activation || activation.id == null) {
+                    if (!activation) {
                         logInvalidItem(activation, this.actor, `item.actions[${index}]`);
                         continue;
                     }
