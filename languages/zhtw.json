@@ -1,0 +1,111 @@
+{
+    "tokenActionHud": {
+      "lancer": {
+        "activate": "開始回合",
+        "activation": "發動效果",
+        "activations": "發動效果",
+        "add_combatant": "加入戰鬥",
+        "agi": "敏捷",
+        "attacks": "攻擊",
+        "basic": "基本動作",
+        "basicAttack": "基本攻擊",
+        "basicTech": "基本科技攻擊",
+        "bond": "羈絆",
+        "bonds": "羈絆",
+        "combat": "戰鬥",
+        "coreBonuses": "核心加成",
+        "corePower": "核心能力",
+        "deactivate": "結束回合",
+        "deployables": "可部屬",
+        "eng": "工程",
+        "frame": "骨架",
+        "freeAction": "免費動作",
+        "freeActions": "免費動作",
+        "fullAction": "完整動作",
+        "fullActions": "完整動作",
+        "fullRepair": "全面維修",
+        "fullTech": "完整科技",
+        "fullTechs": "完整科技",
+        "gear": "裝備",
+        "grit": "毅力",
+        "hase": "機甲技能",
+        "hide_token":  "隱藏指示物",
+        "hul": "機體",
+        "invade": "入侵",
+        "invades": "入侵",
+        "macro": "巨集",
+        "macros": "巨集",
+        "mech": "機甲",
+        "mechWeapons": "機甲武器",
+        "other": "其他",
+        "overcharge": "超限",
+        "overheat": "過熱",
+        "pilot": "駕駛員",
+        "pilotGear": "駕駛員裝備",
+        "pilotWeapon": "駕駛員武器",
+        "pilotWeapons": "駕駛員武器",
+        "protocol": "協定",
+        "protocols": "協定",
+        "quickAction": "快速動作",
+        "quickActions": "快速動作",
+        "quickTech": "快速科技",
+        "quickTechs": "快速科技",
+        "rank": "Rank",
+        "reaction": "反應動作",
+        "reactions": "反應動作",
+        "recharge": "裝填",
+        "refresh": "重整",
+        "remove_combatant": "自戰鬥中移除",
+        "repair": "維修",
+        "reveal_token": "顯示指示物",
+        "skillTriggers": "技能觸發",
+        "skills": "技能",
+        "stabilize": "穩住陣腳",
+        "stat": "基礎數據",
+        "stats": "基礎數據",
+        "status": "狀態",
+        "statuses": "狀態",
+        "structure": "結構傷害表",
+        "sys": "系統",
+        "system": "系統",
+        "systems": "系統",
+        "talent": "天賦",
+        "talents": "天賦",
+        "techAttack": "科技攻擊",
+        "tech": "科技",
+        "techs": "科技",
+        "tier": "Tier",
+        "traits": "特徵",
+        "utility": "工具",
+        "weapon": "武器",
+        "weaponMods": "武器模組",
+        "weapons": "武器",
+        "settings": {
+          "showDestroyedItems": {
+            "hint": "顯示被標記為損毀的道具",
+            "name": "顯示損毀道具"
+          },
+          "showItemsWithoutActivations": {
+            "hint": "顯示沒有啟動功能的道具",
+            "name": "顯示非啟用道具"
+          },
+          "showItemsWithoutUses": {
+            "hint": "顯示有「受限」標籤，且已耗盡次數的道具",
+            "name": "顯示耗盡道具"
+          },
+          "showUnequippedItems": {
+            "hint": "顯示庫存中未裝備的道具",
+            "name": "顯示未裝備道具"
+          },
+          "showUnchargedNpcFeatures": {
+            "hint": "顯示有「充能」標籤，但尚未充能的NPC能力",
+            "name": "顯示未充能能力"
+          },
+          "showUnloadedWeapons": {
+            "hint": "顯示有「裝填」標籤但尚未裝填的武器",
+            "name": "顯示未裝填武器"
+          }
+        }
+      }
+    }
+  }

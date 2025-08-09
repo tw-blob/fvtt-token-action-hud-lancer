@@ -46,6 +46,11 @@
       "lang": "en",
       "name": "English",
       "path": "languages/en.json"
+    },
+    {
+      "lang": "zh-tw",
+      "name": "Traditional Chinese",
+      "path": "languages/zhtw.json"
     }
   ],
   "packs": [],
