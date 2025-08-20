@@ -28,10 +28,10 @@
   ],
   "url": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/",
   "flags": {},
-  "version": "1.0.3",
+  "version": "1.2.4",
   "compatibility": {
     "minimum": "12",
-    "verified": "12.331"
+    "verified": "12.343"
   },
   "esmodules": [
     "./scripts/token-action-hud-lancer.min.js"
@@ -57,7 +57,7 @@
         "compatibility": [
           {
             "minimum": "2.6.0",
-            "verified": "2.8.0"
+            "verified": "2.11.1"
           }
         ]
       }
@@ -69,7 +69,7 @@
         "compatibility": [
           {
             "minimum": "2.0",
-            "verified": "2.0.11"
+            "verified": "2.0.16"
           }
         ]
       }
@@ -80,7 +80,7 @@
     }
   },
   "socket": false,
-  "manifest": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/download/1.0.3/module.zip",
+  "manifest": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/download/1.2.4/module.zip",
   "download": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/releases/latest/download/module.zip",
   "readme": "https://github.com/tw-blob/fvtt-token-action-hud-lancer/",
   "protected": false,

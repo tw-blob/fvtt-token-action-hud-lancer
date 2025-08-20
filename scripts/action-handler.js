@@ -229,10 +229,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                 if (!activations || typeof activations !== 'object') continue;
                 for (const index of Object.keys(activations)) {
                     const activation = activations[index];
-                    if (!activation) {
-                        logInvalidItem(activation, this.actor, `item.actions[${index}]`);
-                        continue;
-                    }
                     const activationType = activation.activation
                     if (!this.showItemsWithoutActivations && this.nonActivations.includes(activationType)) continue
 
@@ -848,10 +844,6 @@ Hooks.once('tokenActionHudCoreApiReady', async (coreModule) => {
                     const talent = value.system.ranks[rank];
                     if (!talent || !Array.isArray(talent.actions)) continue;
                     talent.actions.map((action, index) => {
-                        if (!action || action.id == null) {
-                            logInvalidItem(action, this.actor, `talent.actions[${rank}][${index}]`);
-                            return;
-                        }
                         const activationType = action.activation
                         if (!this.showItemsWithoutActivations && this.nonActivations.includes(activationType)) return
 
